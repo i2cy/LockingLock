@@ -4,8 +4,8 @@
 
 #define CONFIG              "config"
 
-#define WIFI_SSID_ADDR      "ssid"
-#define WIFI_PSK_ADDR       "psk"
+#define WIFI_SSID_ADDR      "WIFI_SSID"
+#define WIFI_PSK_ADDR       "WIFI_PSK"
 
 #include "config.h"
 

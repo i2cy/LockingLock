@@ -49,7 +49,7 @@
     * KeepAlive interval is configurable in PubSubClient.h
     * Maximum packet size is configurable in PubSubClient.h
     * API change: Return boolean rather than int from various functions
-    * API change: Length parameter in message callback changed
+    * API change: Length parameter in message MqttCmdCallback changed
        from int to unsigned int
     * Various internal tidy-ups around types
 1.7

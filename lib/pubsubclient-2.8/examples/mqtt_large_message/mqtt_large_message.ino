@@ -29,12 +29,12 @@
 
 // Update these with values suitable for your network.
 
-const char* ssid = "........";
+const char* WIFI_SSID = "........";
 const char* password = "........";
-const char* mqtt_server = "broker.mqtt-dashboard.com";
+const char* MQTT_SERVER_PTR = "broker.mqtt-dashboard.com";
 
 WiFiClient espClient;
-PubSubClient client(espClient);
+PubSubClient MQTTClient(espClient);
 long lastMsg = 0;
 char msg[50];
 int value = 0;
@@ -45,9 +45,9 @@ void setup_wifi() {
   // We start by connecting to a WiFi network
   Serial.println();
   Serial.print("Connecting to ");
-  Serial.println(ssid);
+  Serial.println(WIFI_SSID);
 
-  WiFi.begin(ssid, password);
+  WiFi.begin(WIFI_SSID, password);
 
   while (WiFi.status() != WL_CONNECTED) {
     delay(500);
@@ -62,7 +62,7 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -109,52 +109,52 @@ void callback(char* topic, byte* payload, unsigned int length) {
     }
   
     // Now we can start to publish the message
-    client.beginPublish("greenBottles/lyrics", msgLen, false);
+    MQTTClient.beginPublish("greenBottles/lyrics", msgLen, false);
     for (int i = bottleCount; i > 0; i--) {
       for (int j = 0; j < 2; j++) {
-        client.print(i);
+        MQTTClient.print(i);
         if (i == 1) {
-          client.print(" green bottle, standing on the wall\n");
+          MQTTClient.print(" green bottle, standing on the wall\n");
         } else {
-          client.print(" green bottles, standing on the wall\n");
+          MQTTClient.print(" green bottles, standing on the wall\n");
         }
       }
-      client.print("And if one green bottle should accidentally fall\nThere'll be ");
+      MQTTClient.print("And if one green bottle should accidentally fall\nThere'll be ");
       switch (i) {
       case 1:
-        client.print("no green bottles, standing on the wall\n\n");
+        MQTTClient.print("no green bottles, standing on the wall\n\n");
         break;
       case 2:
-        client.print("1 green bottle, standing on the wall\n\n");
+        MQTTClient.print("1 green bottle, standing on the wall\n\n");
         break;
       default:
-        client.print(i-1);
-        client.print(" green bottles, standing on the wall\n\n");
+        MQTTClient.print(i - 1);
+        MQTTClient.print(" green bottles, standing on the wall\n\n");
         break;
       };
     }
     // Now we're done!
-    client.endPublish();
+    MQTTClient.endPublish();
   }
 }
 
 void reconnect() {
   // Loop until we're reconnected
-  while (!client.connected()) {
+  while (!MQTTClient.connected()) {
     Serial.print("Attempting MQTT connection...");
     // Create a random client ID
     String clientId = "ESP8266Client-";
     clientId += String(random(0xffff), HEX);
     // Attempt to connect
-    if (client.connect(clientId.c_str())) {
+    if (MQTTClient.connect(clientId.c_str())) {
       Serial.println("connected");
       // Once connected, publish an announcement...
-      client.publish("outTopic", "hello world");
+      MQTTClient.publish("outTopic", "hello world");
       // ... and resubscribe
-      client.subscribe("greenBottles/#");
+      MQTTClient.subscribe("greenBottles/#");
     } else {
       Serial.print("failed, rc=");
-      Serial.print(client.state());
+      Serial.print(MQTTClient.state());
       Serial.println(" try again in 5 seconds");
       // Wait 5 seconds before retrying
       delay(5000);
@@ -166,14 +166,14 @@ void setup() {
   pinMode(BUILTIN_LED, OUTPUT);     // Initialize the BUILTIN_LED pin as an output
   Serial.begin(115200);
   setup_wifi();
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
+  MQTTClient.setServer(MQTT_SERVER_PTR, 1883);
+    MQTTClient.setCallback(MqttCmdCallback);
 }
 
 void loop() {
 
-  if (!client.connected()) {
+  if (!MQTTClient.connected()) {
     reconnect();
   }
-  client.loop();
+  MQTTClient.loop();
 }

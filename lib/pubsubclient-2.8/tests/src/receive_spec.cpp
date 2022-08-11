@@ -19,7 +19,7 @@ void reset_callback() {
     lastLength = 0;
 }
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
     TRACE("Callback received topic=[" << topic << "] length=" << length << "\n")
     callback_called = true;
     strcpy(lastTopic,topic);
@@ -28,7 +28,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 int test_receive_callback() {
-    IT("receives a callback message");
+    IT("receives a MqttCmdCallback message");
     reset_callback();
 
     ShimClient shimClient;
@@ -37,7 +37,7 @@ int test_receive_callback() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, callback, shimClient);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -59,7 +59,7 @@ int test_receive_callback() {
 }
 
 int test_receive_stream() {
-    IT("receives a streamed callback message");
+    IT("receives a streamed MqttCmdCallback message");
     reset_callback();
 
     Stream stream;
@@ -71,7 +71,7 @@ int test_receive_stream() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, callback, shimClient, stream);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient, stream);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -102,7 +102,7 @@ int test_receive_max_sized_message() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, callback, shimClient);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
     int length = 80; // If this is changed to > 128 then the publish packet below
                      // is no longer valid as it assumes the remaining length
                      // is a single-byte. Don't make that mistake like I just
@@ -145,7 +145,7 @@ int test_receive_oversized_message() {
 
     int length = 80; // See comment in test_receive_max_sized_message before changing this value
 
-    PubSubClient client(server, 1883, callback, shimClient);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
     client.setBufferSize(length-1);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
@@ -178,7 +178,7 @@ int test_drop_invalid_remaining_length_message() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, callback, shimClient);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -208,7 +208,7 @@ int test_resize_buffer() {
 
     int length = 80; // See comment in test_receive_max_sized_message before changing this value
 
-    PubSubClient client(server, 1883, callback, shimClient);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
     client.setBufferSize(length-1);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
@@ -260,7 +260,7 @@ int test_receive_oversized_stream_message() {
 
     int length = 80; // See comment in test_receive_max_sized_message before changing this value
 
-    PubSubClient client(server, 1883, callback, shimClient, stream);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient, stream);
     client.setBufferSize(length-1);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
@@ -300,7 +300,7 @@ int test_receive_qos1() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, callback, shimClient);
+    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 

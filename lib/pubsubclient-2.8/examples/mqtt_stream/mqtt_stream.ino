@@ -21,7 +21,7 @@ IPAddress server(172, 16, 0, 2);
 
 SRAM sram(4, SRAM_1024);
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   sram.seek(1);
 
   // do something with the message
@@ -35,14 +35,14 @@ void callback(char* topic, byte* payload, unsigned int length) {
 }
 
 EthernetClient ethClient;
-PubSubClient client(server, 1883, callback, ethClient, sram);
+PubSubClient MQTTClient(server, 1883, MqttCmdCallback, ethClient, sram);
 
 void setup()
 {
   Ethernet.begin(mac, ip);
-  if (client.connect("arduinoClient")) {
-    client.publish("outTopic","hello world");
-    client.subscribe("inTopic");
+  if (MQTTClient.connect("arduinoClient")) {
+    MQTTClient.publish("outTopic", "hello world");
+    MQTTClient.subscribe("inTopic");
   }
 
   sram.begin();
@@ -53,5 +53,5 @@ void setup()
 
 void loop()
 {
-  client.loop();
+  MQTTClient.loop();
 }

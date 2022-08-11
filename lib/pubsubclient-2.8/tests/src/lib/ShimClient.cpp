@@ -31,7 +31,7 @@ int ShimClient::connect(IPAddress ip, uint16_t port) {
         //     this->_error = true;
         // }
         if (port != this->_expectedPort) {
-            TRACE( "port mismatch\n");
+            TRACE( "MQTT_PORT mismatch\n");
             this->_error = true;
         }
     }
@@ -47,7 +47,7 @@ int ShimClient::connect(const char *host, uint16_t port)  {
             this->_error = true;
         }
         if (port != this->_expectedPort) {
-            TRACE( "port mismatch\n");
+            TRACE( "MQTT_PORT mismatch\n");
             this->_error = true;
         }
 

@@ -17,29 +17,29 @@ byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
 IPAddress ip(172, 16, 0, 100);
 IPAddress server(172, 16, 0, 2);
 
-void callback(char* topic, byte* payload, unsigned int length) {
+void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   // handle message arrived
 }
 
 EthernetClient ethClient;
-PubSubClient client(ethClient);
+PubSubClient MQTTClient(ethClient);
 
 long lastReconnectAttempt = 0;
 
 boolean reconnect() {
-  if (client.connect("arduinoClient")) {
+  if (MQTTClient.connect("arduinoClient")) {
     // Once connected, publish an announcement...
-    client.publish("outTopic","hello world");
+    MQTTClient.publish("outTopic", "hello world");
     // ... and resubscribe
-    client.subscribe("inTopic");
+    MQTTClient.subscribe("inTopic");
   }
-  return client.connected();
+  return MQTTClient.connected();
 }
 
 void setup()
 {
-  client.setServer(server, 1883);
-  client.setCallback(callback);
+  MQTTClient.setServer(server, 1883);
+    MQTTClient.setCallback(MqttCmdCallback);
 
   Ethernet.begin(mac, ip);
   delay(1500);
@@ -49,7 +49,7 @@ void setup()
 
 void loop()
 {
-  if (!client.connected()) {
+  if (!MQTTClient.connected()) {
     long now = millis();
     if (now - lastReconnectAttempt > 5000) {
       lastReconnectAttempt = now;
@@ -61,7 +61,7 @@ void loop()
   } else {
     // Client connected
 
-    client.loop();
+    MQTTClient.loop();
   }
 
 }

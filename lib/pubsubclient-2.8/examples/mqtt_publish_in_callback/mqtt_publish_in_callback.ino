@@ -9,7 +9,7 @@
   callback function. The callback function header needs to
   be declared before the PubSubClient constructor and the
   actual callback defined afterwards.
-  This ensures the client reference in the callback function
+  This ensures the client reference in the MqttCmdCallback function
   is valid.
 
 */
@@ -24,13 +24,13 @@ IPAddress ip(172, 16, 0, 100);
 IPAddress server(172, 16, 0, 2);
 
 // Callback function header
-void callback(char* topic, byte* payload, unsigned int length);
+void MqttCmdCallback(char* topic, byte* payload, unsigned int length);
 
 EthernetClient ethClient;
-PubSubClient client(server, 1883, callback, ethClient);
+PubSubClient MQTTClient(server, 1883, MqttCmdCallback, ethClient);
 
 // Callback function
-void callback(char* topic, byte* payload, unsigned int length) {
+void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   // In order to republish this payload, a copy must be made
   // as the orignal payload buffer will be overwritten whilst
   // constructing the PUBLISH packet.
@@ -39,7 +39,7 @@ void callback(char* topic, byte* payload, unsigned int length) {
   byte* p = (byte*)malloc(length);
   // Copy the payload to the new buffer
   memcpy(p,payload,length);
-  client.publish("outTopic", p, length);
+  MQTTClient.publish("outTopic", p, length);
   // Free the memory
   free(p);
 }
@@ -48,13 +48,13 @@ void setup()
 {
 
   Ethernet.begin(mac, ip);
-  if (client.connect("arduinoClient")) {
-    client.publish("outTopic","hello world");
-    client.subscribe("inTopic");
+  if (MQTTClient.connect("arduinoClient")) {
+    MQTTClient.publish("outTopic", "hello world");
+    MQTTClient.subscribe("inTopic");
   }
 }
 
 void loop()
 {
-  client.loop();
+  MQTTClient.loop();
 }

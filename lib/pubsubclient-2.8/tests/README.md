@@ -77,7 +77,7 @@ a client and subscribing to topics.
 
 The file `testcases/settings.py` is used to config the test environment.
 
- - `server_ip` - the IP address of the broker the client should connect to (the broker port is assumed to be 1883).
+ - `server_ip` - the IP address of the broker the client should connect to (the broker MQTT_PORT is assumed to be 1883).
  - `arduino_ip` - the IP address the arduino should use (when not testing DHCP).
 
 Before each sketch is compiled, these values are automatically substituted in. To
