@@ -13,4 +13,5 @@
 
 
 void initKernel();
+void kernelLoopCPU2(void *pvParameters);
 void kernelTask();

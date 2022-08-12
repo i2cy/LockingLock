@@ -9,6 +9,8 @@
 
 
 void setup() {
+    // 设置CPU时钟频率
+    setCpuFrequencyMhz(240);
     // 初始化串口
     initSerial();
     // 初始化Wifi及MQTT
@@ -26,6 +28,6 @@ void loop() {
     MqttTask();
     serialEvent();
 
-    // 实时循环（1KHz）
+    // CPU1实时循环
     kernelTask();
 }

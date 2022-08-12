@@ -28,7 +28,7 @@ const char OK_CODE[] = "OK";
 
 
 void initSerial() {
-    Serial.begin(115200);
+    Serial.begin(921600);
 }
 
 // 串口指令处理函数
