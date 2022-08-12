@@ -61,8 +61,8 @@ char dataTemplate[] = "{\"id\":123,\"dp\":{\"temp\":[{\"v\":%.2f}],\"hull\":[{\"
 bool FLAG_SSID_FAILED = false;
 
 // WIFI信息
-char WIFI_SSID[64] = "";
-char WIFI_PSK[64] = "";
+char WIFI_SSID[64] = "AMA_CDUT";
+char WIFI_PSK[64] = "12356789";
 
 // 定时器,用来循环上传数据
 Ticker tim1;

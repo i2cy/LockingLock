@@ -7,24 +7,25 @@
 
 #include "Wire.h"
 #include "mpu6050.h"
-#include <Arduino.h>
 #include "htsocket.h"
 
 
-#define SDA         12
-#define SCL         13
+#define SDA                 12
+#define SCL                 13
 
 #define PWR_MGMT            0x6B
-#define SMPLRT_DIV          0x19    //陀螺仪采样率，典型值：0x07(125Hz)
-#define CONFIGL             0x1A    //低通滤波频率，典型值：0x06(5Hz)
-#define GYRO_CONFIG         0x1B    //陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
-#define ACCEL_CONFIG        0x1C    //加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
-#define ACCEL_XOUT_H        0x3B    //数据寄存器偏移量
+#define SMPLRT_DIV          0x19    // 陀螺仪采样率，典型值：0x07(125Hz)
+#define CONFIGL             0x1A    // 低通滤波频率，典型值：0x06(5Hz)
+#define GYRO_CONFIG         0x1B    // 陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
+#define ACCEL_CONFIG        0x1C    // 加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
+#define ACCEL_XOUT_H        0x3B    // 数据寄存器偏移量
 
+#define HT_ADDR             0xcb
+#define HT_FUNC             0x01
 
-#define HT_ADDR     0xcb
-#define HT_FUNC     0x01
-
+#define CALI_WINDOW_LPF     0.02f  // 传感器零点指标LPF系数
+#define CALI_ACC_THRESHOLD  20.0f   // 加速度计校准事件触发阈值
+#define CALI_GYRO_THRESHOLD 20.0f   // 陀螺仪校准事件触发阈值
 
 
 const int MPU_addr = 0x68;      // I2C address of the MPU-6050
@@ -71,6 +72,23 @@ void readMpu6050RawData() {
 }
 
 
+void recalibrateMPU6050() {
+    for (float & i : OFFSETS) i = 0.0;
+
+    // 计算偏移量
+    for (uint16_t i = 0; i < 1000; i++) {
+        delayMicroseconds(500);
+        readMpu6050RawData();
+        OFFSETS[0] += 0.001f * (float) AcX;
+        OFFSETS[1] += 0.001f * (float) AcY;
+        OFFSETS[2] += 0.001f * (float) AcZ;
+        OFFSETS[3] += 0.001f * (float) GyX;
+        OFFSETS[4] += 0.001f * (float) GyY;
+        OFFSETS[5] += 0.001f * (float) GyZ;
+    }
+}
+
+
 void initMPU6050() {
     Wire.begin(SDA, SCL);
 
@@ -90,29 +108,58 @@ void initMPU6050() {
     for (uint16_t i = 0; i < 1000; i++) {
         delay(1);
         readMpu6050RawData();
-        OFFSETS[0] += 0.001f * (float)AcX;
-        OFFSETS[1] += 0.001f * (float)AcY;
-        OFFSETS[2] += 0.001f * (float)AcZ;
-        OFFSETS[3] += 0.001f * (float)GyX;
-        OFFSETS[4] += 0.001f * (float)GyY;
-        OFFSETS[5] += 0.001f * (float)GyZ;
+        OFFSETS[0] += 0.001f * (float) AcX;
+        OFFSETS[1] += 0.001f * (float) AcY;
+        OFFSETS[2] += 0.001f * (float) AcZ;
+        OFFSETS[3] += 0.001f * (float) GyX;
+        OFFSETS[4] += 0.001f * (float) GyY;
+        OFFSETS[5] += 0.001f * (float) GyZ;
     }
 }
+
 
 void mpu6050DebugTask() {
     uint16_t buf[7];
     buf[0] = AcX;
     buf[1] = AcY;
     buf[2] = AcZ;
-    buf[3] = (int16_t)(Tmp / 340.00 + 36.53);
+    buf[3] = (int16_t) (Tmp / 340.00 + 36.53);
     buf[4] = GyX;
     buf[5] = GyY;
     buf[6] = GyZ;
 
-    sendHtpack((uint8_t *)&buf, HT_ADDR, HT_FUNC, sizeof(buf));
+    sendHtpack((uint8_t *) &buf, HT_ADDR, HT_FUNC, sizeof(buf));
 }
 
-// 500Hz运行
+// 20Hz 传感器校准事件监测
+void mpu6050CaliEventTask(float dt) {
+    static float window[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+    for (uint8_t i = 0; i < 3; i++) {
+        if (window[i] > CALI_ACC_THRESHOLD) {
+            recalibrateMPU6050();
+            for (float & i2 : window) i2 = 0.0;
+            return;
+        }
+    }
+
+    for (uint8_t i = 3; i < 6; i++) {
+        if (window[i] > CALI_GYRO_THRESHOLD) {
+            recalibrateMPU6050();
+            for (float & i2 : window) i2 = 0.0;
+            return;
+        }
+    }
+
+    window[0] += CALI_WINDOW_LPF * ((float)AcX - window[0]);
+    window[1] += CALI_WINDOW_LPF * ((float)AcY - window[1]);
+    window[2] += CALI_WINDOW_LPF * ((float)AcZ - window[2]);
+    window[3] += CALI_WINDOW_LPF * ((float)GyX - window[3]);
+    window[4] += CALI_WINDOW_LPF * ((float)GyY - window[4]);
+    window[5] += CALI_WINDOW_LPF * ((float)GyZ - window[5]);
+}
+
+// 500Hz mpu6050采样任务
 void mpu6050RtTask(float dt) {
     readMpu6050Data();
 

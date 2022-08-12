@@ -15,4 +15,6 @@
 void initMPU6050();
 // 实时任务（500Hz）
 void mpu6050RtTask(float dt);
+// 实时任务（20Hz）
+void mpu6050CaliEventTask(float dt);
 void mpu6050DebugTask();

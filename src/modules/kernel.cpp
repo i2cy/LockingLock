@@ -47,8 +47,6 @@ void initKernel() {
 // 实时内核（2KHz）
 void kernelLoopCPU2(void *pvParameters) {
     while (true) {
-        //Serial.print("CPU2: ");
-        //Serial.println(Kernel_Cnt);
         if (!FLAG_KERNEL2_RUN) {
             delayMicroseconds(10);
             continue;
@@ -58,10 +56,12 @@ void kernelLoopCPU2(void *pvParameters) {
         // 1000Hz
         if (!(Kernel_Cnt % 2)) {
             mpu6050RtTask(0.002);
-            //mpu6050DebugTask();
         }
 
-
+        // 20Hz
+        if (!(Kernel_Cnt % 100)) {
+            mpu6050CaliEventTask(0.05);
+        }
     }
 }
 
