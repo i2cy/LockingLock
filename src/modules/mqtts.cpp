@@ -9,8 +9,9 @@
 #include "PubSubClient.h"
 #include "Ticker.h"
 #include "WiFiClientSecure.h"
-#include "modules/config.h"
+#include "config.h"
 #include "led.h"
+#include "motor.h"
 
 
 const char *MQTT_SERVER_PTR = "i2cy.tech";      //MQTTS服务器地址
@@ -47,6 +48,7 @@ VDRIHMERipibUWtLKgEEhDtb88x14DsrZTsp3mb0+nkt1lDBR9rUpLVDyI+CiVE=
 
 
 extern LEDManager_t g_LEDManager;
+extern MotorManager_t g_MotorManager;
 
 // 创建TLS加密的WIFI客户端
 WiFiClientSecure WifiClient;
@@ -79,6 +81,8 @@ void MqttCmdCallback(char *topic, byte *payload, unsigned int length) {
         Serial.print((char) payload[i]);
     }
     Serial.println();
+
+    setMotorCmdUnlock();
 }
 
 // 向主题发送模拟的温湿度数据

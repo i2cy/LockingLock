@@ -8,30 +8,49 @@
 #include "Wire.h"
 #include "mpu6050.h"
 #include "htsocket.h"
+#include "led.h"
+#include "motor.h"
 
 
-#define SDA                 12
-#define SCL                 13
+#define SDA                     12
+#define SCL                     13
 
-#define PWR_MGMT            0x6B
-#define SMPLRT_DIV          0x19    // 陀螺仪采样率，典型值：0x07(125Hz)
-#define CONFIGL             0x1A    // 低通滤波频率，典型值：0x06(5Hz)
-#define GYRO_CONFIG         0x1B    // 陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
-#define ACCEL_CONFIG        0x1C    // 加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
-#define ACCEL_XOUT_H        0x3B    // 数据寄存器偏移量
+#define PWR_MGMT                0x6B
+#define SMPLRT_DIV              0x19    // 陀螺仪采样率，典型值：0x07(125Hz)
+#define CONFIGL                 0x1A    // 低通滤波频率，典型值：0x06(5Hz)
+#define GYRO_CONFIG             0x1B    // 陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
+#define ACCEL_CONFIG            0x1C    // 加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
+#define ACCEL_XOUT_H            0x3B    // 数据寄存器偏移量
 
-#define HT_ADDR             0xcb
-#define HT_FUNC             0x01
+#define HT_ADDR                 0xcb
+#define HT_FUNC                 0x01
 
-#define CALI_WINDOW_LPF     0.005f  // 传感器零点指标LPF系数
-#define CALI_ACC_THRESHOLD  20.0f   // 加速度计校准事件触发阈值
-#define CALI_GYRO_THRESHOLD 20.0f   // 陀螺仪校准事件触发阈值
+#define CALI_WINDOW_LPF         0.005f  // 传感器零点指标LPF系数
+#define CALI_ACC_THRESHOLD      20.0f   // 加速度计校准事件触发阈值
+#define CALI_GYRO_THRESHOLD     20.0f   // 陀螺仪校准事件触发阈值
+
+#define KNOCK_TRIG_THRESHOLD    20      // 敲击检测阈值
+#define KNOCK_AMP_THRESHOLD     35      // 敲击检测幅值阈值
+#define KNOCK_YMAX_GAMMA        0.98f   // 敲击最大幅值衰减系数
+#define KNOCK_LPF               0.6f    // 振动幅值低通滤波系数
+#define KNOCK_LPF_LEVEL         5       // 振动幅值低通滤波器阶数
+#define KNOCK_TIMEOUT           1500    // 敲击超时计数
+#define KNOCK_DEATHROOM         30      // 敲击死区
+#define KNOCK_SPLIT_THRESHOLD   325     // 敲击密码组间隔时间
 
 
-const int MPU_addr = 0x68;      // I2C address of the MPU-6050
+extern LEDManager_t g_LEDManager;
+extern MotorManager_t g_MotorManager;
 
+const int MPU_addr = 0x68;          // I2C address of the MPU-6050
+
+bool FLAG_MPU6050_READY = false;
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 float OFFSETS[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+
+float DEBUG = 0.0;
+
+VibeManager_t g_VibeManager;
 
 
 void writeMpu6050Byte(uint8_t register_addr, uint8_t data) {
@@ -90,6 +109,13 @@ void recalibrateMPU6050() {
 
 
 void initMPU6050() {
+    g_VibeManager.expire_countdown = 0;
+    g_VibeManager.current_sequence = 0;
+    g_VibeManager.index = 0;
+    g_VibeManager.triggered = false;
+    for (float & i : g_VibeManager.lpf) i = 0.0;
+    for (float & i : g_VibeManager.amplitudes) i = 0.0;
+
     Wire.begin(SDA, SCL);
 
     writeMpu6050Byte(PWR_MGMT, 0x80);       // 复位
@@ -100,41 +126,29 @@ void initMPU6050() {
     writeMpu6050Byte(ACCEL_CONFIG, 0x10);   // 设置加速度计量程（8G，不自检）
 
     recalibrateMPU6050();
+
+    FLAG_MPU6050_READY = true;
 }
 
 
 void mpu6050DebugTask() {
+    if (!FLAG_MPU6050_READY) return;
+
     uint16_t buf[7];
-    buf[0] = AcX;
-    buf[1] = AcY;
+    buf[0] = g_VibeManager.current_sequence;
+    buf[1] = g_VibeManager.expire_countdown;
     buf[2] = AcZ;
     buf[3] = (int16_t) (Tmp / 340.00 + 36.53);
-    buf[4] = GyX;
-    buf[5] = GyY;
-    buf[6] = GyZ;
+    buf[4] = g_VibeManager.sequence[0];
+    buf[5] = DEBUG;
+    buf[6] = (int16_t)g_VibeManager.lpf[KNOCK_LPF_LEVEL];
 
     sendHtpack((uint8_t *) &buf, HT_ADDR, HT_FUNC, sizeof(buf));
 }
 
 // 20Hz 传感器校准事件监测
 void mpu6050CaliEventTask(float dt) {
-    //static float window[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
-    /*for (uint8_t i = 0; i < 3; i++) {
-        if (window[i] > CALI_ACC_THRESHOLD) {
-            recalibrateMPU6050();
-            for (float & i2 : window) i2 = 0.0;
-            return;
-        }
-    }
-
-    for (uint8_t i = 3; i < 6; i++) {
-        if (window[i] > CALI_GYRO_THRESHOLD) {
-            recalibrateMPU6050();
-            for (float & i2 : window) i2 = 0.0;
-            return;
-        }
-    }*/
+    if (!FLAG_MPU6050_READY) return;
 
     OFFSETS[0] += CALI_WINDOW_LPF * (float)AcX;
     OFFSETS[1] += CALI_WINDOW_LPF * (float)AcY;
@@ -142,18 +156,85 @@ void mpu6050CaliEventTask(float dt) {
     OFFSETS[3] += CALI_WINDOW_LPF * (float)GyX;
     OFFSETS[4] += CALI_WINDOW_LPF * (float)GyY;
     OFFSETS[5] += CALI_WINDOW_LPF * (float)GyZ;
-
-    /*window[0] += CALI_WINDOW_LPF * ((float)AcX - window[0]);
-    window[1] += CALI_WINDOW_LPF * ((float)AcY - window[1]);
-    window[2] += CALI_WINDOW_LPF * ((float)AcZ - window[2]);
-    window[3] += CALI_WINDOW_LPF * ((float)GyX - window[3]);
-    window[4] += CALI_WINDOW_LPF * ((float)GyY - window[4]);
-    window[5] += CALI_WINDOW_LPF * ((float)GyZ - window[5]);*/
 }
 
 // 500Hz mpu6050采样任务
 void mpu6050RtTask(float dt) {
+    static float ymax = 0.0;
+    uint8_t cnt = 0;
     readMpu6050Data();
 
-    //mpu6050DebugTask();
+    if (!FLAG_MPU6050_READY) return;
+
+    for (float & i : g_VibeManager.lpf) {
+        if (cnt) {
+            i += KNOCK_LPF * (g_VibeManager.lpf[cnt - 1] - i);
+        }
+        else {
+            i += KNOCK_LPF * ((float)abs(AcZ) - i);
+        }
+        cnt++;
+    }
+
+    ymax = g_VibeManager.lpf[KNOCK_LPF_LEVEL] > ymax ? g_VibeManager.lpf[KNOCK_LPF_LEVEL] : ymax * KNOCK_YMAX_GAMMA;
+
+    g_VibeManager.amplitudes[g_VibeManager.index] = ymax;
+    g_VibeManager.index = g_VibeManager.index < 22 ? g_VibeManager.index + 1 : 0;
+}
+
+// 500Hz mpu6050震动感知任务
+void mpu6050VibeProcessTask(float dt) {
+    static bool step = true;
+
+    int8_t imin, imax = 0;
+    bool condition_a, condition_b = false;
+    if (!FLAG_MPU6050_READY) return;
+
+    if (!g_VibeManager.expire_countdown) {
+        if (g_VibeManager.current_sequence == 7) {
+            // 密钥验证
+        }
+        g_VibeManager.current_sequence = 0;
+        g_VibeManager.sequence[0] = 0;
+    }
+    else {
+        g_VibeManager.expire_countdown--;
+    }
+
+    for (int8_t i; i < 22; i++) {
+        if (g_VibeManager.amplitudes[i] > g_VibeManager.amplitudes[imax])
+            imax = i;
+        if (g_VibeManager.amplitudes[i] < g_VibeManager.amplitudes[imin])
+            imin = i;
+    }
+
+    condition_a = (g_VibeManager.amplitudes[imax] - g_VibeManager.amplitudes[imin]) > KNOCK_TRIG_THRESHOLD;
+    condition_b = g_VibeManager.amplitudes[imax] > KNOCK_AMP_THRESHOLD;
+
+    DEBUG = g_VibeManager.amplitudes[imax] - g_VibeManager.amplitudes[imin];
+
+    if (imax >= g_VibeManager.index) imax -= 22;
+    if (imin >= g_VibeManager.index) imin -= 22;
+
+    if (condition_a && condition_b && imax > imin) {
+        if (!g_VibeManager.triggered) {
+            g_VibeManager.sequence[g_VibeManager.current_sequence]++;
+            step = false;
+        }
+        g_VibeManager.expire_countdown = KNOCK_TIMEOUT;
+        g_VibeManager.triggered = true;
+        ledSwitchOn(LED_KNOCK_STATUS);
+    }
+    else {
+        if ((KNOCK_TIMEOUT - g_VibeManager.expire_countdown) > KNOCK_DEATHROOM) {
+            g_VibeManager.triggered = false;
+            ledSwitchOff(LED_KNOCK_STATUS);
+        }
+        if (!step && (KNOCK_TIMEOUT - g_VibeManager.expire_countdown) > KNOCK_SPLIT_THRESHOLD) {
+            g_VibeManager.current_sequence =
+                    g_VibeManager.current_sequence < 8 ? g_VibeManager.current_sequence + 1 : 0;
+            g_VibeManager.sequence[g_VibeManager.current_sequence] = 0;
+            step = true;
+        }
+    }
 }

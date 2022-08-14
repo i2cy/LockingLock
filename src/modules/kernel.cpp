@@ -60,7 +60,19 @@ void kernelLoopCPU2(void *pvParameters) {
         // 500Hz
         if (!(Kernel2_Cnt % 4)) {
             mpu6050DebugTask();
+            mpu6050VibeProcessTask(0.002);
             //mpu6050RtTask(0.002);
+        }
+
+        // 333Hz
+        if (!(Kernel2_Cnt % 6)) {
+            motorTask();
+            triggerTask();
+        }
+
+        // 200Hz
+        if (!(Kernel_Cnt % 10)) {
+            motorSequenceTask();
         }
 
         // 50Hz
@@ -73,7 +85,7 @@ void kernelLoopCPU2(void *pvParameters) {
         if (!(Kernel2_Cnt % 2000)) {
             vTaskDelay(1);
             Kernel2_Cnt = Kernel2_Cnt + 2;
-            if (Kernel2_Cnt > 60000) Kernel2_Cnt = 0;
+            if (Kernel2_Cnt > 60000) Kernel2_Cnt -= 60000;
         }
 
         Kernel2_Cnt = Kernel2_Cnt < 60000 ? Kernel2_Cnt + 1 : 0;
@@ -89,21 +101,8 @@ void kernelTask() {
     else FLAG_KERNEL_RUN = false;
 
     // 666Hz
-    if (!(Kernel2_Cnt % 3)) {
-        motorTask();
-        triggerTask();
-    }
-
-    // 666Hz
     if (!(Kernel_Cnt % 3)) {
-        mpu6050RtTask(0.001);
-        //mpu6050DebugTask();
-    }
-
-    // 10Hz
-    if (!(Kernel_Cnt % 200)) {
-        reconnectWifiEventTask();
-        clientReconnectEventTask();
+        mpu6050RtTask(0.002);
     }
 
     // 20Hz
@@ -111,6 +110,12 @@ void kernelTask() {
         mpu6050CaliEventTask(0.05);
         //ledEventTask();
         //motorTask();
+    }
+
+    // 10Hz
+    if (!(Kernel_Cnt % 200)) {
+        reconnectWifiEventTask();
+        clientReconnectEventTask();
     }
 
     Kernel_Cnt = Kernel_Cnt < 60000 ? Kernel_Cnt + 1 : 0;

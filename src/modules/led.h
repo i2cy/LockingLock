@@ -52,3 +52,6 @@ typedef struct {
 // 初始化LED
 void initLED();
 void ledEventTask();
+void ledSwitchOn(uint8_t pin);
+void ledSwitchOff(uint8_t pin);
+void ledSwitchToggle(uint8_t pin);
