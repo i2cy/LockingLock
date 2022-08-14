@@ -23,7 +23,7 @@
 #define HT_ADDR             0xcb
 #define HT_FUNC             0x01
 
-#define CALI_WINDOW_LPF     0.02f  // 传感器零点指标LPF系数
+#define CALI_WINDOW_LPF     0.005f  // 传感器零点指标LPF系数
 #define CALI_ACC_THRESHOLD  20.0f   // 加速度计校准事件触发阈值
 #define CALI_GYRO_THRESHOLD 20.0f   // 陀螺仪校准事件触发阈值
 
@@ -95,26 +95,11 @@ void initMPU6050() {
     writeMpu6050Byte(PWR_MGMT, 0x80);       // 复位
     writeMpu6050Byte(SMPLRT_DIV, 0x00);     // 设置陀螺仪采样率(1000Hz)
     writeMpu6050Byte(PWR_MGMT, 0x00);       // 设置设备时钟源
-    writeMpu6050Byte(CONFIGL, 0x00);        // 设置LPF（截止频率44Hz）
+    writeMpu6050Byte(CONFIGL, 0x03);        // 设置LPF（截止频率44Hz）
     writeMpu6050Byte(GYRO_CONFIG, 0x18);    // 设置陀螺仪量程（2000°/s，不自检）
     writeMpu6050Byte(ACCEL_CONFIG, 0x10);   // 设置加速度计量程（8G，不自检）
 
-    // 抛弃前2000个数据
-    for (uint16_t i = 0; i < 2000; i++) {
-        delay(1);
-        readMpu6050RawData();
-    }
-    // 计算偏移量
-    for (uint16_t i = 0; i < 1000; i++) {
-        delay(1);
-        readMpu6050RawData();
-        OFFSETS[0] += 0.001f * (float) AcX;
-        OFFSETS[1] += 0.001f * (float) AcY;
-        OFFSETS[2] += 0.001f * (float) AcZ;
-        OFFSETS[3] += 0.001f * (float) GyX;
-        OFFSETS[4] += 0.001f * (float) GyY;
-        OFFSETS[5] += 0.001f * (float) GyZ;
-    }
+    recalibrateMPU6050();
 }
 
 
@@ -133,9 +118,9 @@ void mpu6050DebugTask() {
 
 // 20Hz 传感器校准事件监测
 void mpu6050CaliEventTask(float dt) {
-    static float window[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
+    //static float window[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
 
-    for (uint8_t i = 0; i < 3; i++) {
+    /*for (uint8_t i = 0; i < 3; i++) {
         if (window[i] > CALI_ACC_THRESHOLD) {
             recalibrateMPU6050();
             for (float & i2 : window) i2 = 0.0;
@@ -149,14 +134,21 @@ void mpu6050CaliEventTask(float dt) {
             for (float & i2 : window) i2 = 0.0;
             return;
         }
-    }
+    }*/
 
-    window[0] += CALI_WINDOW_LPF * ((float)AcX - window[0]);
+    OFFSETS[0] += CALI_WINDOW_LPF * (float)AcX;
+    OFFSETS[1] += CALI_WINDOW_LPF * (float)AcY;
+    OFFSETS[2] += CALI_WINDOW_LPF * (float)AcZ;
+    OFFSETS[3] += CALI_WINDOW_LPF * (float)GyX;
+    OFFSETS[4] += CALI_WINDOW_LPF * (float)GyY;
+    OFFSETS[5] += CALI_WINDOW_LPF * (float)GyZ;
+
+    /*window[0] += CALI_WINDOW_LPF * ((float)AcX - window[0]);
     window[1] += CALI_WINDOW_LPF * ((float)AcY - window[1]);
     window[2] += CALI_WINDOW_LPF * ((float)AcZ - window[2]);
     window[3] += CALI_WINDOW_LPF * ((float)GyX - window[3]);
     window[4] += CALI_WINDOW_LPF * ((float)GyY - window[4]);
-    window[5] += CALI_WINDOW_LPF * ((float)GyZ - window[5]);
+    window[5] += CALI_WINDOW_LPF * ((float)GyZ - window[5]);*/
 }
 
 // 500Hz mpu6050采样任务

@@ -10,6 +10,7 @@
 #include "Ticker.h"
 #include "WiFiClientSecure.h"
 #include "modules/config.h"
+#include "led.h"
 
 
 const char *MQTT_SERVER_PTR = "i2cy.tech";      //MQTTS服务器地址
@@ -45,6 +46,8 @@ VDRIHMERipibUWtLKgEEhDtb88x14DsrZTsp3mb0+nkt1lDBR9rUpLVDyI+CiVE=
 #define MQTT_FB_TOPIC   "esp32test/data"        // 反馈主题
 
 
+extern LEDManager_t g_LEDManager;
+
 // 创建TLS加密的WIFI客户端
 WiFiClientSecure WifiClient;
 
@@ -58,7 +61,7 @@ char msgJson[75];
 char dataTemplate[] = "{\"id\":123,\"dp\":{\"temp\":[{\"v\":%.2f}],\"hull\":[{\"v\":%.2f}]}}";
 
 // 标志位
-bool FLAG_SSID_FAILED = false;
+bool FLAG_WIFI_FAILED = false;
 
 // WIFI信息
 char WIFI_SSID[64] = "AMA_CDUT";
@@ -94,74 +97,61 @@ void sendTempAndHumi() {
 // MQTT连接函数
 bool setupMQTT() {
     bool ret;
-
     // 连接到服务器
     MQTTClient.setServer(MQTT_SERVER_PTR, MQTT_PORT);
     ret = MQTTClient.connect(MQTT_DEVID, MQTT_PUBID, MQTT_PASSWORD);
     if (MQTTClient.connected()) {
-        Serial.println("I2Net is connected!");
         MQTTClient.subscribe(MQTT_CMD_TOPIC); //订阅命令下发主题
     }
     return ret;
 }
 
-// WIFI连接函数
-void setupWifi() {
-    static uint8_t i = 0;
-    //char WIFI_SSID[64] = "";
-    //char WIFI_PSK[64] = "";
+// 10Hz WIFI连接任务
+void reconnectWifiEventTask() {
+    static uint8_t countdown = 0;
 
-    //if (FLAG_SSID_FAILED) return;
+    if (WiFi.isConnected()) {
+        FLAG_WIFI_FAILED = false;
+        countdown = 0;
+        return;
+    }
 
-    delay(10);
-    Serial.print("Connecting to WiFi via SSID: \"");
-
-    readSSIDConfig(WIFI_SSID);
-    readPSKConfig(WIFI_PSK);
-
-    Serial.print(WIFI_SSID);
-    Serial.print("\"");
-
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(WIFI_SSID, WIFI_PSK);
-
-    if (!WiFi.isConnected()) {
-        if (i > 10) {
-            FLAG_SSID_FAILED = true;
-            Serial.println("Failed");
-            i = 0;
-            return;
-        } else {
-            Serial.print(".");
-        }
-        delay(1000);
-        i++;
+    if (countdown) {
+        countdown--;
+        return;
     }
     else {
-        FLAG_SSID_FAILED = false;
-        Serial.println("OK");
-        Serial.println("Wifi connected");
+        readSSIDConfig(WIFI_SSID);
+        readPSKConfig(WIFI_PSK);
+
+        WiFi.mode(WIFI_STA);
+        WiFi.begin(WIFI_SSID, WIFI_PSK);
+        countdown = 100;
     }
 }
 
-// 重连函数, 如果客户端断线,可以通过此函数重连
-void clientReconnect() {
-    if (FLAG_SSID_FAILED) return;
+// 10Hz 重连任务
+void clientReconnectEventTask() {
+    static uint8_t countdown = 0;
 
-    Serial.println("reconnect MQTT...");
-    if (setupMQTT()) {
+    if (MQTTClient.connected() || FLAG_WIFI_FAILED) {
+        countdown = 0;
+        return;
     }
-    else {
-        Serial.println("failed");
-        Serial.println(MQTTClient.state());
-        Serial.println("try again in 5 sec");
-        delay(5000);
+
+    if (countdown) {
+        countdown--;
+        return;
+    }
+
+    if (!setupMQTT()) {
+        countdown = 50;
     }
 }
 
 void initMqtt() {
     // 连接WIFI
-    setupWifi();
+    reconnectWifiEventTask();
     // 设置服务器证书
     WifiClient.setCACert(MQTT_CA_CERT);
     // 加载连接对象到MQTT客户端
@@ -175,17 +165,18 @@ void initMqtt() {
     tim1.attach(5, sendTempAndHumi);
 }
 
-
+// 非实时
 void MqttTask() {
-    if (!WiFi.isConnected()) { // 检查WIFI状态，若未连接则尝试连接
-        setupWifi();
+    if (!WiFi.isConnected()) {
+        FLAG_WIFI_FAILED = true;
+        g_LEDManager.ledNet = NET_LED_FLASH;
     }
-    else if (!MQTTClient.connected()) { // 检查MQTT客户端状态，若未连接则尝试连接
-        clientReconnect();
-        delay(100);
+    else if (!MQTTClient.connected()) {
+        g_LEDManager.ledNet = NET_LED_BLINK;
+    }
+    else {
+        g_LEDManager.ledNet = NET_LED_ON;
     }
 
     MQTTClient.loop(); //客户端循环检测
-
-    //serialEvent();
 }

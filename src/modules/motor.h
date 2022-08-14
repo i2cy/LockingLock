@@ -7,5 +7,24 @@
 
 #endif //LOCKINGLOCK_MOTOR_H
 
-void testMotor();
+
+typedef enum {
+    STOP = 0,
+    IDLE,
+    RETRACT,
+    RELEASE,
+} em_MotorStatus_t;
+
+
+typedef struct {
+    uint32_t total_steps;
+    int32_t current_steps;
+    em_MotorStatus_t status;
+} MotorManager_t;
+
+
+void ringMotor();
 void initMotor();
+void setMotorStop();
+void motorTask();
+void triggerTask();

@@ -8,6 +8,8 @@
 #endif //LOCKINGLOCK_MQTTS_H
 
 bool setupMQTT();
-void setupWifi();
+void reconnectWifiEventTask();
 void initMqtt();
 void MqttTask();
+void clientReconnectEventTask();
+

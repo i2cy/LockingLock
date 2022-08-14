@@ -18,7 +18,7 @@
 #define MAX_CMD_LENGTH  32                      // 单个指令最大长度
 
 
-extern bool FLAG_SSID_FAILED;
+extern bool FLAG_WIFI_FAILED;
 extern char WIFI_SSID[64];
 extern char WIFI_PSK[64];
 
@@ -52,8 +52,8 @@ void processSerialCmd(uint8_t *cmd_t) {
     }
     else if (cmd_t[0] == 0x12) {  // WIFI配网-连接WIFI
         sendHtpack((uint8_t *) &OK_CODE, serial_addr, cmd_fcode, sizeof(OK_CODE) - 1);
-        FLAG_SSID_FAILED = false;
-        setupWifi();
+        //FLAG_WIFI_FAILED = false;
+        //reconnectWifiEventTask();
     }
 }
 

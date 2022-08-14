@@ -9,17 +9,21 @@
 #include <Arduino.h>
 #include "kernel.h"
 #include "mpu6050.h"
+#include "led.h"
+#include "mqtts.h"
+#include "esp_task_wdt.h"
+#include "motor.h"
 
 
 hw_timer_t *Kernel_Tick = NULL;
 uint16_t Kernel_Cnt = 0;
+uint16_t Kernel2_Cnt = 0;
 
 bool FLAG_KERNEL_RUN = false;
 bool FLAG_KERNEL2_RUN = false;
 
 
 void kernelTickInterrupt() {
-    Kernel_Cnt = Kernel_Cnt < 50000 ? Kernel_Cnt + 1 : 0;
     FLAG_KERNEL_RUN = true;
     FLAG_KERNEL2_RUN = true;
 }
@@ -36,45 +40,78 @@ void initKernel() {
     // 将实时内核运行在第二核心上
     xTaskCreatePinnedToCore(kernelLoopCPU2,
                             "RT_KERNEL",
-                            32768,
+                            65536,
                             NULL,
                             1,
                             NULL,
-                            1
+                            0
     );
 }
 
-// 实时内核（2KHz）
+// 实时内核（2KHz）(CPU-0)
 void kernelLoopCPU2(void *pvParameters) {
     while (true) {
         if (!FLAG_KERNEL2_RUN) {
-            delayMicroseconds(10);
+            delayMicroseconds(1);
             continue;
         }
         else FLAG_KERNEL2_RUN = false;
 
-        // 1000Hz
-        if (!(Kernel_Cnt % 2)) {
-            mpu6050RtTask(0.002);
+        // 500Hz
+        if (!(Kernel2_Cnt % 4)) {
+            mpu6050DebugTask();
+            //mpu6050RtTask(0.002);
         }
 
-        // 20Hz
-        if (!(Kernel_Cnt % 100)) {
-            mpu6050CaliEventTask(0.05);
+        // 50Hz
+        if (!(Kernel2_Cnt % 40)) {
+            ledEventTask();
+            //mpu6050CaliEventTask(0.02);
         }
+
+        // 1Hz
+        if (!(Kernel2_Cnt % 2000)) {
+            vTaskDelay(1);
+            Kernel2_Cnt = Kernel2_Cnt + 2;
+            if (Kernel2_Cnt > 60000) Kernel2_Cnt = 0;
+        }
+
+        Kernel2_Cnt = Kernel2_Cnt < 60000 ? Kernel2_Cnt + 1 : 0;
     }
 }
 
-// 实时内核（2KHz）
+// 实时内核（2KHz）(CPU-1)
 void kernelTask() {
     if (!FLAG_KERNEL_RUN) {
-        delayMicroseconds(10);
+        delayMicroseconds(1);
         return;
     }
     else FLAG_KERNEL_RUN = false;
 
-    // 1000Hz
-    if (!(Kernel_Cnt % 2)) {
-        mpu6050DebugTask();
+    // 666Hz
+    if (!(Kernel2_Cnt % 3)) {
+        motorTask();
+        triggerTask();
     }
+
+    // 666Hz
+    if (!(Kernel_Cnt % 3)) {
+        mpu6050RtTask(0.001);
+        //mpu6050DebugTask();
+    }
+
+    // 10Hz
+    if (!(Kernel_Cnt % 200)) {
+        reconnectWifiEventTask();
+        clientReconnectEventTask();
+    }
+
+    // 20Hz
+    if (!(Kernel_Cnt % 100)) {
+        mpu6050CaliEventTask(0.05);
+        //ledEventTask();
+        //motorTask();
+    }
+
+    Kernel_Cnt = Kernel_Cnt < 60000 ? Kernel_Cnt + 1 : 0;
 }

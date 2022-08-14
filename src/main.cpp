@@ -6,6 +6,8 @@
 #include "modules/motor.h"
 #include "modules/mpu6050.h"
 #include "modules/kernel.h"
+#include "modules/led.h"
+#include "esp_task_wdt.h"
 
 
 void setup() {
@@ -13,6 +15,8 @@ void setup() {
     setCpuFrequencyMhz(240);
     // 初始化串口
     initSerial();
+    // 初始化LED
+    initLED();
     // 初始化Wifi及MQTT
     initMqtt();
     // 初始化电机驱动
