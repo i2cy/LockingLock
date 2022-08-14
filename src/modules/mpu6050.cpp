@@ -32,7 +32,7 @@
 #define KNOCK_TRIG_THRESHOLD    20      // 敲击检测阈值
 #define KNOCK_AMP_THRESHOLD     35      // 敲击检测幅值阈值
 #define KNOCK_YMAX_GAMMA        0.98f   // 敲击最大幅值衰减系数
-#define KNOCK_LPF               0.6f    // 振动幅值低通滤波系数
+#define KNOCK_LPF               0.5f    // 振动幅值低通滤波系数
 #define KNOCK_LPF_LEVEL         5       // 振动幅值低通滤波器阶数
 #define KNOCK_TIMEOUT           1500    // 敲击超时计数
 #define KNOCK_DEATHROOM         30      // 敲击死区
@@ -140,8 +140,8 @@ void mpu6050DebugTask() {
     buf[2] = AcZ;
     buf[3] = (int16_t) (Tmp / 340.00 + 36.53);
     buf[4] = g_VibeManager.sequence[0];
-    buf[5] = DEBUG;
-    buf[6] = (int16_t)g_VibeManager.lpf[KNOCK_LPF_LEVEL];
+    buf[5] = (int16_t)DEBUG;
+    buf[6] = (int16_t)g_VibeManager.amplitudes[g_VibeManager.index];
 
     sendHtpack((uint8_t *) &buf, HT_ADDR, HT_FUNC, sizeof(buf));
 }
@@ -179,7 +179,7 @@ void mpu6050RtTask(float dt) {
     ymax = g_VibeManager.lpf[KNOCK_LPF_LEVEL] > ymax ? g_VibeManager.lpf[KNOCK_LPF_LEVEL] : ymax * KNOCK_YMAX_GAMMA;
 
     g_VibeManager.amplitudes[g_VibeManager.index] = ymax;
-    g_VibeManager.index = g_VibeManager.index < 22 ? g_VibeManager.index + 1 : 0;
+    g_VibeManager.index = g_VibeManager.index < 21 ? g_VibeManager.index + 1 : 0;
 }
 
 // 500Hz mpu6050震动感知任务
@@ -216,7 +216,7 @@ void mpu6050VibeProcessTask(float dt) {
     if (imax >= g_VibeManager.index) imax -= 22;
     if (imin >= g_VibeManager.index) imin -= 22;
 
-    if (condition_a && condition_b && imax > imin) {
+    if ( condition_b && imax > imin) {
         if (!g_VibeManager.triggered) {
             g_VibeManager.sequence[g_VibeManager.current_sequence]++;
             step = false;
@@ -232,7 +232,7 @@ void mpu6050VibeProcessTask(float dt) {
         }
         if (!step && (KNOCK_TIMEOUT - g_VibeManager.expire_countdown) > KNOCK_SPLIT_THRESHOLD) {
             g_VibeManager.current_sequence =
-                    g_VibeManager.current_sequence < 8 ? g_VibeManager.current_sequence + 1 : 0;
+                    g_VibeManager.current_sequence < 7 ? g_VibeManager.current_sequence + 1 : 0;
             g_VibeManager.sequence[g_VibeManager.current_sequence] = 0;
             step = true;
         }

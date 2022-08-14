@@ -60,7 +60,6 @@ void kernelLoopCPU2(void *pvParameters) {
         // 500Hz
         if (!(Kernel2_Cnt % 4)) {
             mpu6050DebugTask();
-            mpu6050VibeProcessTask(0.002);
             //mpu6050RtTask(0.002);
         }
 
@@ -102,14 +101,17 @@ void kernelTask() {
 
     // 666Hz
     if (!(Kernel_Cnt % 3)) {
-        mpu6050RtTask(0.002);
+        mpu6050RtTask(0.0015);
+    }
+
+    // 500Hz
+    if (!(Kernel_Cnt % 4)) {
+        mpu6050VibeProcessTask(0.002);
     }
 
     // 20Hz
     if (!(Kernel_Cnt % 100)) {
         mpu6050CaliEventTask(0.05);
-        //ledEventTask();
-        //motorTask();
     }
 
     // 10Hz
