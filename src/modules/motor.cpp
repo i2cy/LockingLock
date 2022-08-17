@@ -18,6 +18,8 @@
 
 #define UNLOCK_HOLD_TIME            600
 #define UNLOCK_BY_CMD_TIMEOUT       4000
+#define UNLOCK_BY_CMD_TRIG_TIME     300
+#define UNLOCK_BY_CMD_KNOCK_COUNT   3
 
 
 extern LEDManager_t g_LEDManager;
@@ -63,6 +65,11 @@ void setMotorStop() {
 }
 
 
+void setMotorPskUnlock() {
+    g_MotorManager.sequence = UNLOCK_BY_PSK;
+}
+
+
 void setMotorCmdUnlock() {
     g_MotorManager.countdown = UNLOCK_BY_CMD_TIMEOUT;
     g_MotorManager.sequence = WAITING_BY_CMD;
@@ -94,24 +101,62 @@ void releaseMotor() {
 }
 
 
+void ringMotorOnOpen() {
+    for (int i = 0; i<100; i++) {
+        MOTOR.stepOne(true);
+        delayMicroseconds(1800);
+        MOTOR.stepOne(false);
+        delayMicroseconds(1500);
+    }
+    delay(500);
+    for (int i = 0; i<100; i++) {
+        MOTOR.stepOne(true);
+        delayMicroseconds(1500);
+        MOTOR.stepOne(false);
+        delayMicroseconds(1800);
+    }
+    delay(500);
+    for (int i = 0; i<100; i++) {
+        MOTOR.stepOne(true);
+        delayMicroseconds(1800);
+        MOTOR.stepOne(false);
+        delayMicroseconds(1500);
+    }
+    delay(500);
+    for (int i = 0; i<100; i++) {
+        MOTOR.stepOne(true);
+        delayMicroseconds(1500);
+        MOTOR.stepOne(false);
+        delayMicroseconds(1800);
+    }
+    delay(500);
+    for (int i = 0; i<200; i++) {
+        MOTOR.stepOne(true);
+        delayMicroseconds(1300);
+        MOTOR.stepOne(false);
+        delayMicroseconds(1300);
+    }
+}
+
+
 void ringMotor() {
     for (int i = 0; i<100; i++) {
         MOTOR.stepOne(true);
+        delayMicroseconds(1300);
+        MOTOR.stepOne(false);
+        delayMicroseconds(1300);
+    }
+    for (int i = 0; i<100; i++) {
+        MOTOR.stepOne(true);
         delayMicroseconds(1500);
         MOTOR.stepOne(false);
         delayMicroseconds(1500);
     }
     for (int i = 0; i<100; i++) {
         MOTOR.stepOne(true);
-        delayMicroseconds(2000);
+        delayMicroseconds(1800);
         MOTOR.stepOne(false);
-        delayMicroseconds(2000);
-    }
-    for (int i = 0; i<100; i++) {
-        MOTOR.stepOne(true);
-        delayMicroseconds(2500);
-        MOTOR.stepOne(false);
-        delayMicroseconds(2500);
+        delayMicroseconds(1800);
     }
     MOTOR.setSpeed(500);
 }
@@ -126,6 +171,8 @@ void triggerTask() {
 
 
 void motorSequenceTask() {
+    static uint32_t last_countdown = 0;
+
     switch (g_MotorManager.sequence) {
         case LOCKED:
             break;
@@ -141,8 +188,12 @@ void motorSequenceTask() {
 
         case WAITING_BY_CMD:
             if (g_MotorManager.countdown) {
-                if (g_VibeManager.sequence[g_VibeManager.current_sequence] > 1)
-                    g_MotorManager.sequence = UNLOCK_BY_CMD;
+                if (g_VibeManager.sequence[g_VibeManager.current_sequence] >= UNLOCK_BY_CMD_KNOCK_COUNT) {
+                        ringMotorOnOpen();
+                        g_MotorManager.sequence = UNLOCK_BY_CMD;
+                        last_countdown = 0;
+
+                }
                 g_MotorManager.countdown--;
             }
             else {

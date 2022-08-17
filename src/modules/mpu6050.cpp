@@ -30,12 +30,12 @@
 #define CALI_GYRO_THRESHOLD     20.0f   // 陀螺仪校准事件触发阈值
 
 #define KNOCK_TRIG_THRESHOLD    20      // 敲击检测阈值
-#define KNOCK_AMP_THRESHOLD     35      // 敲击检测幅值阈值
+#define KNOCK_AMP_THRESHOLD     30      // 敲击检测幅值阈值
 #define KNOCK_YMAX_GAMMA        0.98f   // 敲击最大幅值衰减系数
-#define KNOCK_LPF               0.5f    // 振动幅值低通滤波系数
+#define KNOCK_LPF               0.4f    // 振动幅值低通滤波系数
 #define KNOCK_LPF_LEVEL         5       // 振动幅值低通滤波器阶数
 #define KNOCK_TIMEOUT           1500    // 敲击超时计数
-#define KNOCK_DEATHROOM         30      // 敲击死区
+#define KNOCK_DEATHROOM         40      // 敲击死区
 #define KNOCK_SPLIT_THRESHOLD   325     // 敲击密码组间隔时间
 
 
@@ -47,8 +47,8 @@ const int MPU_addr = 0x68;          // I2C address of the MPU-6050
 bool FLAG_MPU6050_READY = false;
 int16_t AcX, AcY, AcZ, Tmp, GyX, GyY, GyZ;
 float OFFSETS[6] = {0.0, 0.0, 0.0, 0.0, 0.0, 0.0};
-
 float DEBUG = 0.0;
+uint8_t MPU6050_WATCHDOG_COUNTDOWN = 200;
 
 VibeManager_t g_VibeManager;
 
@@ -88,6 +88,28 @@ void readMpu6050RawData() {
     GyX = Wire.read() << 8 | Wire.read(); // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
     GyY = Wire.read() << 8 | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
     GyZ = Wire.read() << 8 | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+
+    //Serial.print("ASD");
+}
+
+
+void feedMPU6050Wd() {
+    MPU6050_WATCHDOG_COUNTDOWN = 200;
+}
+
+// 20Hz
+void watchdogMPU6050Task() {
+    bool condition;
+    if (MPU6050_WATCHDOG_COUNTDOWN) {
+        MPU6050_WATCHDOG_COUNTDOWN--;
+    }
+    else {
+        initMPU6050();
+        feedMPU6050Wd();
+    }
+
+    condition = AcX == 0 && AcY == 0 && AcZ == 0;
+    if (!condition) feedMPU6050Wd();
 }
 
 
@@ -115,6 +137,8 @@ void initMPU6050() {
     g_VibeManager.triggered = false;
     for (float & i : g_VibeManager.lpf) i = 0.0;
     for (float & i : g_VibeManager.amplitudes) i = 0.0;
+
+    delay(1000);
 
     Wire.begin(SDA, SCL);
 

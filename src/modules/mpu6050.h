@@ -32,4 +32,7 @@ void mpu6050RtTask(float dt);
 void mpu6050CaliEventTask(float dt);
 // 实时任务（500Hz）
 void mpu6050VibeProcessTask(float dt);
+// 实时任务（20Hz）
+void watchdogMPU6050Task();
+// 实时任务（500Hz）
 void mpu6050DebugTask();

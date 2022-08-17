@@ -18,3 +18,8 @@
 typedef struct {
     uint8_t tri_keychain[3][8];
 } KeyManager_t;
+
+
+
+void reconfigureTime();
+void timeCaliTask();

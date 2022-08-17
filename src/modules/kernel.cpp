@@ -13,6 +13,7 @@
 #include "mqtts.h"
 #include "esp_task_wdt.h"
 #include "motor.h"
+#include "keygen.h"
 
 
 hw_timer_t *Kernel_Tick = NULL;
@@ -59,7 +60,7 @@ void kernelLoopCPU2(void *pvParameters) {
 
         // 500Hz
         if (!(Kernel2_Cnt % 4)) {
-            mpu6050DebugTask();
+            //mpu6050DebugTask();
             //mpu6050RtTask(0.002);
         }
 
@@ -78,6 +79,11 @@ void kernelLoopCPU2(void *pvParameters) {
         if (!(Kernel2_Cnt % 40)) {
             ledEventTask();
             //mpu6050CaliEventTask(0.02);
+        }
+
+        // 20Hz
+        if (!(Kernel2_Cnt % 100)) {
+            timeCaliTask();
         }
 
         // 1Hz
@@ -112,12 +118,20 @@ void kernelTask() {
     // 20Hz
     if (!(Kernel_Cnt % 100)) {
         mpu6050CaliEventTask(0.05);
+        watchdogMPU6050Task();
     }
 
     // 10Hz
     if (!(Kernel_Cnt % 200)) {
         reconnectWifiEventTask();
         clientReconnectEventTask();
+    }
+
+    // 1Hz
+    if (!(Kernel2_Cnt % 2000)) {
+        vTaskDelay(1);
+        Kernel2_Cnt = Kernel2_Cnt + 2;
+        if (Kernel2_Cnt > 60000) Kernel2_Cnt -= 60000;
     }
 
     Kernel_Cnt = Kernel_Cnt < 60000 ? Kernel_Cnt + 1 : 0;
