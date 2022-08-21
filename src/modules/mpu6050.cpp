@@ -21,6 +21,8 @@
 #define GYRO_CONFIG             0x1B    // 陀螺仪自检及测量范围，典型值：0x18(不自检，2000deg/s)
 #define ACCEL_CONFIG            0x1C    // 加速计自检、测量范围及高通滤波频率，典型值：0x01(不自检，2G，5Hz)
 #define ACCEL_XOUT_H            0x3B    // 数据寄存器偏移量
+#define PRODUCT_ID_ADDR         0x75    // 设备ID地址
+#define PRODUCT_ID              0x68
 
 #define HT_ADDR                 0xcb
 #define HT_FUNC                 0x01
@@ -35,7 +37,7 @@
 #define KNOCK_LPF               0.4f    // 振动幅值低通滤波系数
 #define KNOCK_LPF_LEVEL         5       // 振动幅值低通滤波器阶数
 #define KNOCK_TIMEOUT           1500    // 敲击超时计数
-#define KNOCK_DEATHROOM         40      // 敲击死区
+#define KNOCK_DEATHROOM         36      // 敲击死区
 #define KNOCK_SPLIT_THRESHOLD   325     // 敲击密码组间隔时间
 
 
@@ -104,12 +106,20 @@ void watchdogMPU6050Task() {
         MPU6050_WATCHDOG_COUNTDOWN--;
     }
     else {
+        //esp_restart();
         initMPU6050();
         feedMPU6050Wd();
     }
 
-    condition = AcX == 0 && AcY == 0 && AcZ == 0;
-    if (!condition) feedMPU6050Wd();
+    condition = AcX == 0.0 && AcY == 0.0 && AcZ == 0.0;
+    if (condition) {
+        FLAG_MPU6050_READY = false;
+        g_LEDManager.ledKnock = KNOCK_LED_FLASH;
+    }
+    else {
+        FLAG_MPU6050_READY = true;
+        feedMPU6050Wd();
+    }
 }
 
 
@@ -138,16 +148,22 @@ void initMPU6050() {
     for (float & i : g_VibeManager.lpf) i = 0.0;
     for (float & i : g_VibeManager.amplitudes) i = 0.0;
 
-    delay(1000);
-
     Wire.begin(SDA, SCL);
+    delay(200);
 
     writeMpu6050Byte(PWR_MGMT, 0x80);       // 复位
+    delay(200);
+
     writeMpu6050Byte(SMPLRT_DIV, 0x00);     // 设置陀螺仪采样率(1000Hz)
+    delay(10);
     writeMpu6050Byte(PWR_MGMT, 0x00);       // 设置设备时钟源
+    delay(10);
     writeMpu6050Byte(CONFIGL, 0x03);        // 设置LPF（截止频率44Hz）
+    delay(10);
     writeMpu6050Byte(GYRO_CONFIG, 0x18);    // 设置陀螺仪量程（2000°/s，不自检）
+    delay(10);
     writeMpu6050Byte(ACCEL_CONFIG, 0x10);   // 设置加速度计量程（8G，不自检）
+    delay(10);
 
     recalibrateMPU6050();
 
@@ -247,12 +263,12 @@ void mpu6050VibeProcessTask(float dt) {
         }
         g_VibeManager.expire_countdown = KNOCK_TIMEOUT;
         g_VibeManager.triggered = true;
-        ledSwitchOn(LED_KNOCK_STATUS);
+        g_LEDManager.ledKnock = KNOCK_LED_ON;
     }
     else {
         if ((KNOCK_TIMEOUT - g_VibeManager.expire_countdown) > KNOCK_DEATHROOM) {
             g_VibeManager.triggered = false;
-            ledSwitchOff(LED_KNOCK_STATUS);
+            g_LEDManager.ledKnock = KNOCK_LED_OFF;
         }
         if (!step && (KNOCK_TIMEOUT - g_VibeManager.expire_countdown) > KNOCK_SPLIT_THRESHOLD) {
             g_VibeManager.current_sequence =

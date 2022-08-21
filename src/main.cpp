@@ -7,7 +7,7 @@
 #include "modules/mpu6050.h"
 #include "modules/kernel.h"
 #include "modules/led.h"
-#include "esp_task_wdt.h"
+#include "modules/keygen.h"
 
 
 void setup() {
@@ -17,6 +17,8 @@ void setup() {
     initSerial();
     // 初始化LED
     initLED();
+    // 初始化动态密钥生成器
+    initKeygen();
     // 初始化Wifi及MQTT
     initMqtt();
     // 初始化电机驱动

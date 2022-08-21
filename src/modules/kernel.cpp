@@ -16,9 +16,13 @@
 #include "keygen.h"
 
 
+#define KERNEL_TIMEOUT              200
+
+
 hw_timer_t *Kernel_Tick = NULL;
 uint16_t Kernel_Cnt = 0;
 uint16_t Kernel2_Cnt = 0;
+uint8_t Kernel1_WD_CD = 200;
 
 bool FLAG_KERNEL_RUN = false;
 bool FLAG_KERNEL2_RUN = false;
@@ -27,6 +31,16 @@ bool FLAG_KERNEL2_RUN = false;
 void kernelTickInterrupt() {
     FLAG_KERNEL_RUN = true;
     FLAG_KERNEL2_RUN = true;
+}
+
+// 20Hz
+void kernel1WdTask() {
+    if (!Kernel1_WD_CD) {
+        esp_restart();
+    }
+    else {
+        Kernel1_WD_CD--;
+    }
 }
 
 
@@ -41,7 +55,7 @@ void initKernel() {
     // 将实时内核运行在第二核心上
     xTaskCreatePinnedToCore(kernelLoopCPU2,
                             "RT_KERNEL",
-                            65536,
+                            131072,
                             NULL,
                             1,
                             NULL,
@@ -84,6 +98,12 @@ void kernelLoopCPU2(void *pvParameters) {
         // 20Hz
         if (!(Kernel2_Cnt % 100)) {
             timeCaliTask();
+            kernel1WdTask();
+        }
+
+        // 5Hz
+        if (!(Kernel2_Cnt % 400)) {
+            //dynkeyDebugTask();
         }
 
         // 1Hz
@@ -123,6 +143,7 @@ void kernelTask() {
 
     // 10Hz
     if (!(Kernel_Cnt % 200)) {
+        Kernel1_WD_CD = KERNEL_TIMEOUT;
         reconnectWifiEventTask();
         clientReconnectEventTask();
     }

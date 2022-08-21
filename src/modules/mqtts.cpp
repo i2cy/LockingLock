@@ -12,6 +12,7 @@
 #include "config.h"
 #include "led.h"
 #include "motor.h"
+#include "keygen.h"
 
 
 const char *MQTT_SERVER_PTR = "i2cy.tech";      //MQTTS服务器地址

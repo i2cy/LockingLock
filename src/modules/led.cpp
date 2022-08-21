@@ -117,7 +117,7 @@ void ledEventTask() {
 
     switch (g_LEDManager.ledKnock) {
         case KNOCK_LED_OFF:
-            //ledSwitchOff(LED_KNOCK_STATUS);
+            ledSwitchOff(LED_KNOCK_STATUS);
             break;
 
         case KNOCK_LED_ON:

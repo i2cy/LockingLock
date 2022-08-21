@@ -20,6 +20,7 @@ typedef struct {
 } KeyManager_t;
 
 
-
+void initKeygen();
 void reconfigureTime();
+void dynkeyDebugTask();
 void timeCaliTask();
