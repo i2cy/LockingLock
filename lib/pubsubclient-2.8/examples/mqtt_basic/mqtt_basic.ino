@@ -22,7 +22,7 @@ byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
 IPAddress ip(172, 16, 0, 100);
 IPAddress server(172, 16, 0, 2);
 
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -61,7 +61,7 @@ void setup()
   Serial.begin(57600);
 
   MQTTClient.setServer(server, 1883);
-    MQTTClient.setCallback(MqttCmdCallback);
+    MQTTClient.setCallback(mqttCmdCallback);
 
   Ethernet.begin(mac, ip);
   // Allow the hardware to sort itself out

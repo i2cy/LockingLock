@@ -21,6 +21,4 @@ typedef struct {
 
 
 void initKeygen();
-void reconfigureTime();
 void dynkeyDebugTask();
-void timeCaliTask();

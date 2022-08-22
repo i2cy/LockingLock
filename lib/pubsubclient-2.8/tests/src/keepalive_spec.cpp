@@ -7,7 +7,7 @@
 
 byte server[] = { 172, 16, 0, 2 };
 
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   // handle message arrived
 }
 
@@ -21,7 +21,7 @@ int test_keepalive_pings_idle() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
+    PubSubClient client(server, 1883, mqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -54,7 +54,7 @@ int test_keepalive_pings_with_outbound_qos0() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
+    PubSubClient client(server, 1883, mqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -90,7 +90,7 @@ int test_keepalive_pings_with_inbound_qos0() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
+    PubSubClient client(server, 1883, mqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -123,7 +123,7 @@ int test_keepalive_no_pings_inbound_qos1() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
+    PubSubClient client(server, 1883, mqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 
@@ -151,7 +151,7 @@ int test_keepalive_disconnects_hung() {
     byte connack[] = { 0x20, 0x02, 0x00, 0x00 };
     shimClient.respond(connack,4);
 
-    PubSubClient client(server, 1883, MqttCmdCallback, shimClient);
+    PubSubClient client(server, 1883, mqttCmdCallback, shimClient);
     int rc = client.connect((char*)"client_test1");
     IS_TRUE(rc);
 

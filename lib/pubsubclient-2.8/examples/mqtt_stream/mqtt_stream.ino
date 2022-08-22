@@ -21,7 +21,7 @@ IPAddress server(172, 16, 0, 2);
 
 SRAM sram(4, SRAM_1024);
 
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   sram.seek(1);
 
   // do something with the message
@@ -35,7 +35,7 @@ void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
 }
 
 EthernetClient ethClient;
-PubSubClient MQTTClient(server, 1883, MqttCmdCallback, ethClient, sram);
+PubSubClient MQTTClient(server, 1883, mqttCmdCallback, ethClient, sram);
 
 void setup()
 {

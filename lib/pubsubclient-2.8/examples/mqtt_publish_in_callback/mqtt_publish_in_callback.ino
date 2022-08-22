@@ -24,13 +24,13 @@ IPAddress ip(172, 16, 0, 100);
 IPAddress server(172, 16, 0, 2);
 
 // Callback function header
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length);
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length);
 
 EthernetClient ethClient;
-PubSubClient MQTTClient(server, 1883, MqttCmdCallback, ethClient);
+PubSubClient MQTTClient(server, 1883, mqttCmdCallback, ethClient);
 
 // Callback function
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   // In order to republish this payload, a copy must be made
   // as the orignal payload buffer will be overwritten whilst
   // constructing the PUBLISH packet.

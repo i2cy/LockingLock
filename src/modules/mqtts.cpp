@@ -38,18 +38,33 @@ VDRIHMERipibUWtLKgEEhDtb88x14DsrZTsp3mb0+nkt1lDBR9rUpLVDyI+CiVE=
 -----END CERTIFICATE-----
 )EOF";
 
-#define MQTT_DEVID      "esp_device001"         // 设备ID
+#define MQTT_DEVID          "esp_device001"         // 设备ID
 
+#define MQTT_PUBID          "icy"                   // MQTT用户名
+#define MQTT_PASSWORD       "__C4o0d9y6#"           // MQTT密码
 
-#define MQTT_PUBID      "icy"                   // MQTT用户名
-#define MQTT_PASSWORD   "__C4o0d9y6#"           // MQTT密码
+#define MQTT_CMD_TOPIC      "esp32test/request/#"   // 订阅指令主题
+#define MQTT_FB_TOPIC       "esp32test/data"        // 上发主题
 
-#define MQTT_CMD_TOPIC  "esp32test/request/#"   // 订阅指令主题
-#define MQTT_FB_TOPIC   "esp32test/data"        // 反馈主题
+#define CMD_ID_HEARTBEAT    0x00                    // 心跳
+#define CMD_ID_REQTIMECALI  0x01                    // 请求校准时间
+#define CMD_ID_REQCONFIG    0x02                    // 请求接收配置
+#define CMD_ID_SENDCALI     0x30                    // 发送校准数据
+#define CMD_ID_REQOK        0xff                    // OK
+
+#define CMD_ID_TIMECALI     0x11                    // 校准时间
+#define CMD_ID_CONFIG       0x12                    // 设置配置
+#define CMD_ID_OFFSETCALI   0x13                    // 校准门锁行程
+#define CMD_ID_OPENGATE     0x20                    // 通知开门
+#define CMD_ID_RING         0x21                    // 发出响声
+#define CMD_ID_OK           0xee                    // OK
+
+#define CMD_TIMEOUT         (10 * 200)              // 指令获取反馈超时计数
 
 
 extern LEDManager_t g_LEDManager;
 extern MotorManager_t g_MotorManager;
+extern int32_t TIME_OFFSET_SEC;
 
 // 创建TLS加密的WIFI客户端
 WiFiClientSecure WifiClient;
@@ -57,47 +72,155 @@ WiFiClientSecure WifiClient;
 // 初始化PubSub客户端
 PubSubClient MQTTClient(WifiClient);
 
-// 发送信息缓冲区
-char msgJson[75];
-
-// 信息模板
-char dataTemplate[] = "{\"id\":123,\"dp\":{\"temp\":[{\"v\":%.2f}],\"hull\":[{\"v\":%.2f}]}}";
-
 // 标志位
 bool FLAG_WIFI_FAILED = false;
+uint8_t OK_FEEDBACK = 0;
 
 // WIFI信息
 char WIFI_SSID[64] = "AMA_CDUT";
 char WIFI_PSK[64] = "12356789";
 
 // 定时器,用来循环上传数据
-Ticker tim1;
+Ticker HeartBeat_TIM;
+
+
+void mqttSendCommand(const char *topic, uint8_t cmd_id, const uint8_t *payload, uint16_t length) {
+    static bool global_lock = false;
+    static uint8_t flow_cnt = 0;
+    bool sent = false;
+    uint8_t buf[length + 5], checksum = 0;
+    uint16_t countdown = CMD_TIMEOUT;
+
+    buf[0] = flow_cnt;
+    buf[1] = cmd_id;
+    buf[2] = length >> 8;
+    buf[3] = length;
+    memcpy(buf + 4, payload, length);
+    buf[length + 4] = 0;
+
+    for (uint8_t &i: buf) checksum += i;
+    buf[length + 4] = checksum;
+
+    while (global_lock) {
+        vTaskDelay(1);
+    }
+
+    global_lock = true;
+    flow_cnt++;
+
+    if (cmd_id) OK_FEEDBACK++;
+
+    while (OK_FEEDBACK) {
+        if (countdown) {
+            countdown--;
+        }
+        else {
+            sent = false;
+            countdown = CMD_TIMEOUT;
+        }
+
+        if (!sent) {
+            MQTTClient.publish(topic, buf, length + 5);
+            sent = true;
+        }
+        vTaskDelay(5);
+    }
+
+    global_lock = false;
+}
 
 
 // 收到主题下发的回调, 注意这个回调要实现三个形参 1:topic 主题， 2: payload: 传递过来的信息， 3: length: 长度
-void MqttCmdCallback(char *topic, byte *payload, unsigned int length) {
-    Serial.println("message rev:");
-    Serial.println(topic);
-    for (size_t i = 0; i < length; i++) {
-        Serial.print((char) payload[i]);
-    }
-    Serial.println();
+void mqttCmdCallback(char *topic, byte *payload, unsigned int length) {
+    auto *header = (MqttCmdHeader_t *) payload;
+    uint8_t checksum;
 
-    setMotorCmdUnlock();
+    checksum = payload[length - 1];
+
+    for (uint32_t i = 0; i < length; i++) checksum -= payload[i];
+
+    if (checksum) return;
+
+    if (header->cmd_id == CMD_ID_TIMECALI) {                    // 校准时间
+        time_t now;
+        time(&now);
+
+        TIME_OFFSET_SEC = *((int32_t *) (payload + 4)) - now;
+    }
+    else if (header->cmd_id == CMD_ID_CONFIG) {                 // 设置配置
+        g_MotorManager.total_steps = *((uint32_t *) (payload + 4));
+    }
+    else if (header->cmd_id == CMD_ID_OFFSETCALI) {             // 校准门锁行程
+        setMotorCaliOffset();
+    }
+    else if (header->cmd_id == CMD_ID_OPENGATE) {               // 通知开门
+        setMotorCmdUnlock();
+    }
+    else if (header->cmd_id == CMD_ID_RING) {                   // 发出响声
+        ringMotor();
+    }
+    else if (header->cmd_id == CMD_ID_OK) {                     // OK
+        if (OK_FEEDBACK) OK_FEEDBACK--;
+    }
+
 }
 
-// 向主题发送模拟的温湿度数据
-void sendTempAndHumi() {
+
+// 发送心跳
+void sendHeartbeat() {
+    time_t ts;
+
     if (MQTTClient.connected()) {
-        //将模拟温湿度数据套入dataTemplate模板中, 生成的字符串传给msgJson
-        snprintf(msgJson, 75, dataTemplate, 22.5, 35.6);
-        //Serial.print("public the data:");
-        //Serial.println(msgJson);
-
-        //发送数据到主题
-        MQTTClient.publish(MQTT_FB_TOPIC, (uint8_t *) msgJson, strlen(msgJson));
+        time(&ts);
+        ts += TIME_OFFSET_SEC;
+        mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_HEARTBEAT, (uint8_t *) &ts, 4);
     }
 }
+
+
+// 发送校准数据
+void sendCaliOffset(uint32_t offset) {
+    if (MQTTClient.connected()) {
+        mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_SENDCALI, (uint8_t *) &offset, 4);
+    }
+}
+
+
+// 发送请求接收配置
+void sendConfigRequest() {
+    time_t ts;
+
+    if (MQTTClient.connected()) {
+        time(&ts);
+        ts += TIME_OFFSET_SEC;
+        mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_REQCONFIG, (uint8_t *) &ts, 4);
+    }
+}
+
+
+// 发送请求校准时间
+void sendTimeCaliRequest() {
+    time_t ts;
+
+    if (MQTTClient.connected()) {
+        time(&ts);
+        ts += TIME_OFFSET_SEC;
+        mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_REQTIMECALI, (uint8_t *) &ts, 4);
+    }
+}
+
+
+// 发送OK
+void sendOK() {
+    time_t ts;
+
+    if (MQTTClient.connected()) {
+        time(&ts);
+        ts += TIME_OFFSET_SEC;
+        mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_REQOK, (uint8_t *) &ts, 4);
+    }
+}
+
 
 // MQTT连接函数
 bool setupMQTT() {
@@ -110,6 +233,7 @@ bool setupMQTT() {
     }
     return ret;
 }
+
 
 // 10Hz WIFI连接任务
 void reconnectWifiEventTask() {
@@ -135,6 +259,7 @@ void reconnectWifiEventTask() {
     }
 }
 
+
 // 10Hz 重连任务
 void clientReconnectEventTask() {
     static uint8_t countdown = 0;
@@ -154,6 +279,7 @@ void clientReconnectEventTask() {
     }
 }
 
+
 void initMqtt() {
     // 连接WIFI
     reconnectWifiEventTask();
@@ -164,11 +290,12 @@ void initMqtt() {
     // 连接MQTT
     setupMQTT();
     // 设置MQTT客户端消息回调函数
-    MQTTClient.setCallback(MqttCmdCallback);
+    MQTTClient.setCallback(mqttCmdCallback);
 
     // 设置定时发送
-    tim1.attach(5, sendTempAndHumi);
+    HeartBeat_TIM.attach(5, sendHeartbeat);
 }
+
 
 // 非实时
 void MqttTask() {

@@ -29,10 +29,8 @@
 extern bool FLAG_WIFI_FAILED;
 
 
-uint32_t NPT_COUNTDOWN = 0;
-
+int32_t TIME_OFFSET_SEC = 0;
 Key_t DPSK;
-
 Dynkey DKgen = nullptr;
 
 
@@ -41,24 +39,6 @@ void initKeygen() {
     DPSK.len = DK_PSK_LENGTH;
 
     DKgen = Dynkey(&DPSK);
-}
-
-
-void reconfigureTime() {
-    if (!WiFi.isConnected()) return;
-
-    configTime(GMT_OFFSET, DAY_OFFSET, NTP_SERVER);
-    NPT_COUNTDOWN = TIME_CALI_TICK;
-
-    //delay(7000);
-    //dynkeyDebugTask();
-}
-
-// 20Hz
-void timeCaliTask() {
-    if (!NPT_COUNTDOWN) {
-        reconfigureTime();
-    }
 }
 
 // 5Hz

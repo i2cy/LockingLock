@@ -62,7 +62,7 @@ void setup_wifi() {
   Serial.println(WiFi.localIP());
 }
 
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   Serial.print("Message arrived [");
   Serial.print(topic);
   Serial.print("] ");
@@ -167,7 +167,7 @@ void setup() {
   Serial.begin(115200);
   setup_wifi();
   MQTTClient.setServer(MQTT_SERVER_PTR, 1883);
-    MQTTClient.setCallback(MqttCmdCallback);
+    MQTTClient.setCallback(mqttCmdCallback);
 }
 
 void loop() {

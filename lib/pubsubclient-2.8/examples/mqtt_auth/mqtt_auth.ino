@@ -16,12 +16,12 @@ byte mac[]    = {  0xDE, 0xED, 0xBA, 0xFE, 0xFE, 0xED };
 IPAddress ip(172, 16, 0, 100);
 IPAddress server(172, 16, 0, 2);
 
-void MqttCmdCallback(char* topic, byte* payload, unsigned int length) {
+void mqttCmdCallback(char* topic, byte* payload, unsigned int length) {
   // handle message arrived
 }
 
 EthernetClient ethClient;
-PubSubClient MQTTClient(server, 1883, MqttCmdCallback, ethClient);
+PubSubClient MQTTClient(server, 1883, mqttCmdCallback, ethClient);
 
 void setup()
 {

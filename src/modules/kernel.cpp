@@ -97,7 +97,6 @@ void kernelLoopCPU2(void *pvParameters) {
 
         // 20Hz
         if (!(Kernel2_Cnt % 100)) {
-            timeCaliTask();
             kernel1WdTask();
         }
 

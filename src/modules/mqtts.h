@@ -7,9 +7,24 @@
 
 #endif //LOCKINGLOCK_MQTTS_H
 
+#include "Arduino.h"
+
+
+typedef struct {
+    uint8_t flow_cnt;
+    uint8_t cmd_id;
+    uint16_t length;
+} MqttCmdHeader_t;
+
+
 bool setupMQTT();
+
 void reconnectWifiEventTask();
+
 void initMqtt();
+
 void MqttTask();
+
 void clientReconnectEventTask();
 
+void sendCaliOffset(uint32_t offset);
