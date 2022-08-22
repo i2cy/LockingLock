@@ -231,7 +231,7 @@ void mpu6050VibeProcessTask(float dt) {
     if (!FLAG_MPU6050_READY) return;
 
     if (!g_VibeManager.expire_countdown) {
-        if (g_VibeManager.current_sequence == 7) {
+        if (g_VibeManager.current_sequence == 4) {
             // 密钥验证
         }
         g_VibeManager.current_sequence = 0;
@@ -272,7 +272,7 @@ void mpu6050VibeProcessTask(float dt) {
         }
         if (!step && (KNOCK_TIMEOUT - g_VibeManager.expire_countdown) > KNOCK_SPLIT_THRESHOLD) {
             g_VibeManager.current_sequence =
-                    g_VibeManager.current_sequence < 7 ? g_VibeManager.current_sequence + 1 : 0;
+                    g_VibeManager.current_sequence < 3 ? g_VibeManager.current_sequence + 1 : 0;
             g_VibeManager.sequence[g_VibeManager.current_sequence] = 0;
             step = true;
         }

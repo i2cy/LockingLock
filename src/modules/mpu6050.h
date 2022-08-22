@@ -15,7 +15,7 @@
 typedef struct {
     uint16_t expire_countdown;  // 敲击超时倒计时
     uint8_t current_sequence;   // 敲击序列索引
-    uint8_t sequence[8];        // 敲击序列
+    uint8_t sequence[4];        // 敲击序列
 
     uint8_t index;              // 波形队列头索引
     bool triggered;             // 当前敲击状态
