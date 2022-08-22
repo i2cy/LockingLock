@@ -88,7 +88,7 @@ void retractMotor() {
         if (g_MotorManager.cali_enabled) {
             g_MotorManager.total_steps = -g_MotorManager.current_steps;
             g_MotorManager.cali_enabled = false;
-            sendCaliOffset();
+            sendCaliOffset(g_MotorManager.total_steps);
         }
 
         g_MotorManager.current_steps = 0;

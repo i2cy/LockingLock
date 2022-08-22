@@ -16,7 +16,7 @@
 
 
 const char *MQTT_SERVER_PTR = "i2cy.tech";      //MQTTS服务器地址
-const int MQTT_PORT = 8883;                      //端口号
+const int MQTT_PORT = 8883;                     //端口号
 
 static const char MQTT_CA_CERT[] PROGMEM = R"EOF(
 -----BEGIN CERTIFICATE-----
@@ -45,6 +45,8 @@ VDRIHMERipibUWtLKgEEhDtb88x14DsrZTsp3mb0+nkt1lDBR9rUpLVDyI+CiVE=
 
 #define MQTT_CMD_TOPIC      "esp32test/request/#"   // 订阅指令主题
 #define MQTT_FB_TOPIC       "esp32test/data"        // 上发主题
+
+#define MQTT_HEARTBEAT_SEC  5                       // 心跳间隔
 
 #define CMD_ID_HEARTBEAT    0x00                    // 心跳
 #define CMD_ID_REQTIMECALI  0x01                    // 请求校准时间
@@ -108,9 +110,9 @@ void mqttSendCommand(const char *topic, uint8_t cmd_id, const uint8_t *payload, 
     global_lock = true;
     flow_cnt++;
 
-    if (cmd_id) OK_FEEDBACK++;
+    if (cmd_id > 0 && cmd_id < 0xff) OK_FEEDBACK++;
 
-    while (OK_FEEDBACK) {
+    while (!sent || OK_FEEDBACK) {
         if (countdown) {
             countdown--;
         }
@@ -135,34 +137,46 @@ void mqttCmdCallback(char *topic, byte *payload, unsigned int length) {
     auto *header = (MqttCmdHeader_t *) payload;
     uint8_t checksum;
 
-    checksum = payload[length - 1];
+    Serial.print("Received commandID: ");
+    Serial.print(header->cmd_id);
+    Serial.print("\n");
 
-    for (uint32_t i = 0; i < length; i++) checksum -= payload[i];
+    checksum = 0;
 
-    if (checksum) return;
+    for (uint32_t i = 0; i < (length - 1); i++) checksum += payload[i];
+
+    Serial.print("Checksum result: ");
+    Serial.print(checksum);
+    Serial.print("\n");
+
+    if (checksum != payload[length - 1]) return;
 
     if (header->cmd_id == CMD_ID_TIMECALI) {                    // 校准时间
         time_t now;
         time(&now);
 
         TIME_OFFSET_SEC = *((int32_t *) (payload + 4)) - now;
+        sendOK();
     }
     else if (header->cmd_id == CMD_ID_CONFIG) {                 // 设置配置
         g_MotorManager.total_steps = *((uint32_t *) (payload + 4));
+        sendOK();
     }
     else if (header->cmd_id == CMD_ID_OFFSETCALI) {             // 校准门锁行程
         setMotorCaliOffset();
+        sendOK();
     }
     else if (header->cmd_id == CMD_ID_OPENGATE) {               // 通知开门
         setMotorCmdUnlock();
+        sendOK();
     }
     else if (header->cmd_id == CMD_ID_RING) {                   // 发出响声
         ringMotor();
+        sendOK();
     }
     else if (header->cmd_id == CMD_ID_OK) {                     // OK
         if (OK_FEEDBACK) OK_FEEDBACK--;
     }
-
 }
 
 
@@ -174,6 +188,7 @@ void sendHeartbeat() {
         time(&ts);
         ts += TIME_OFFSET_SEC;
         mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_HEARTBEAT, (uint8_t *) &ts, 4);
+        Serial.print("heartbeat sent\n");
     }
 }
 
@@ -293,7 +308,7 @@ void initMqtt() {
     MQTTClient.setCallback(mqttCmdCallback);
 
     // 设置定时发送
-    HeartBeat_TIM.attach(5, sendHeartbeat);
+    HeartBeat_TIM.attach(MQTT_HEARTBEAT_SEC, sendHeartbeat);
 }
 
 

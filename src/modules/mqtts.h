@@ -28,3 +28,6 @@ void MqttTask();
 void clientReconnectEventTask();
 
 void sendCaliOffset(uint32_t offset);
+
+void sendOK();
+
