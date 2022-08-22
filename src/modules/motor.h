@@ -22,6 +22,9 @@ typedef enum {
     WAITING_BY_CMD,
     UNLOCK_BY_CMD,
     HOLD_BY_CMD,
+    CALI_BY_CMD,
+    HOLD_CALI_BY_CMD,
+    CALI_FINISH,
     UNLOCK_BY_PSK,
     HOLD_BY_PSK
 } em_MotorSequence_t;
@@ -33,6 +36,7 @@ typedef struct {
     uint32_t countdown;
     em_MotorStatus_t status;
     em_MotorSequence_t sequence;
+    bool cali_enabled;
 } MotorManager_t;
 
 
@@ -40,6 +44,7 @@ void ringMotor();
 void initMotor();
 
 void setMotorStop();
+void setMotorCaliOffset();
 void setMotorCmdUnlock();
 
 void motorTask();

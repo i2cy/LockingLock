@@ -4,6 +4,7 @@
 #include "motor.h"
 #include "led.h"
 #include "mpu6050.h"
+#include "mqtts.h"
 
 
 #define MOTOR_A                     11
@@ -12,14 +13,14 @@
 #define MOTOR_D                     10
 
 #define TRIGGER                     14
-#define CALI_MOTOR_THRESHOLD        20
 
 #define MAX_IDLE_TIME               6000
 
 #define UNLOCK_HOLD_TIME            600
 #define UNLOCK_BY_CMD_TIMEOUT       4000
-#define UNLOCK_BY_CMD_TRIG_TIME     300
 #define UNLOCK_BY_CMD_KNOCK_COUNT   3
+
+#define CALI_MOTOR_HOLD_TIME        2000
 
 
 extern LEDManager_t g_LEDManager;
@@ -51,6 +52,7 @@ void initMotor()
     g_MotorManager.status = IDLE;
     g_MotorManager.countdown = 0;
     g_MotorManager.sequence = LOCKED;
+    g_MotorManager.cali_enabled = false;
 
     ringMotor();
     setMotorStop();
@@ -76,10 +78,19 @@ void setMotorCmdUnlock() {
 }
 
 
+void setMotorCaliOffset() {
+    g_MotorManager.sequence = CALI_BY_CMD;
+}
+
+
 void retractMotor() {
     if (TRIGGERED) {
-        if (g_MotorManager.current_steps < 0 || g_MotorManager.current_steps > CALI_MOTOR_THRESHOLD)
-            g_MotorManager.total_steps -= g_MotorManager.current_steps;
+        if (g_MotorManager.cali_enabled) {
+            g_MotorManager.total_steps = -g_MotorManager.current_steps;
+            g_MotorManager.cali_enabled = false;
+            sendCaliOffset();
+        }
+
         g_MotorManager.current_steps = 0;
         g_MotorManager.status = IDLE;
     }
@@ -158,7 +169,6 @@ void ringMotor() {
         MOTOR.stepOne(false);
         delayMicroseconds(1800);
     }
-    MOTOR.setSpeed(500);
 }
 
 
@@ -217,6 +227,36 @@ void motorSequenceTask() {
             }
             else {
                 g_MotorManager.sequence = LOCKING;
+            }
+            break;
+
+        case CALI_BY_CMD:
+            if (TRIGGERED) {
+                g_MotorManager.countdown = CALI_MOTOR_HOLD_TIME;
+                g_MotorManager.sequence = HOLD_CALI_BY_CMD;
+                g_MotorManager.status = STOP;
+            }
+            else {
+                g_MotorManager.status = RETRACT;
+            }
+            break;
+
+        case HOLD_CALI_BY_CMD:
+            if (g_MotorManager.countdown) {
+                g_MotorManager.countdown--;
+            }
+            else {
+                g_MotorManager.sequence = CALI_FINISH;
+                g_MotorManager.cali_enabled = true;
+            }
+            break;
+
+        case CALI_FINISH:
+            if (TRIGGERED) {
+                g_MotorManager.sequence = LOCKING;
+            }
+            else {
+                g_MotorManager.status = RETRACT;
             }
             break;
 
