@@ -61,14 +61,14 @@ void Dynkey16::keygen(Key_t *dst, int8_t offset) {
     MD5.calculate();
     MD5.getBytes(sub_key_unit);
 
-    printMD5("Time Unit: ", sub_key_unit);
+    //printMD5("Time Unit: ", sub_key_unit);
 
     MD5.begin();
     MD5.add(key->value, key->len);
     MD5.calculate();
     MD5.getBytes(key_unit);
 
-    printMD5("Key Unit: ", key_unit);
+    //printMD5("Key Unit: ", key_unit);
 
     MD5.begin();
     MD5.add(sub_key_unit, 16);
@@ -76,7 +76,7 @@ void Dynkey16::keygen(Key_t *dst, int8_t offset) {
     MD5.calculate();
     MD5.getBytes(sub_key_unit);
 
-    printMD5("Sub Key Unit: ", sub_key_unit);
+    //printMD5("Sub Key Unit: ", sub_key_unit);
 
     for (uint8_t i = 0; i < flush_times; i++) {
         MD5.begin();
@@ -107,7 +107,7 @@ void Dynkey16::keygen(Key_t *dst, int8_t offset) {
 
     memcpy(dst->value, sub_key_unit, 16);
 
-    printMD5("Finnal Key: ", sub_key_unit);
+    //printMD5("Finnal Key: ", sub_key_unit);
 }
 
 
@@ -144,6 +144,6 @@ void Dynkey16::printMD5(const char *title, uint8_t *keychain) {
     Serial.print(title);
     charToHex(debug_array, keychain, 16);
     debug_array[32] = 0x00;
-    Serial.print((char *)debug_array);
+    Serial.print((char *) debug_array);
     Serial.print("\n");
 }

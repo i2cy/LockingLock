@@ -41,6 +41,7 @@ void initKeygen() {
     DKgen = Dynkey16(&DPSK);
 }
 
+
 // 5Hz
 void dynkeyDebugTask() {
     //uint8_t buf[16 + 4];
