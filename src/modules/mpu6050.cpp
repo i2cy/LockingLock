@@ -248,7 +248,7 @@ void mpu6050VibeProcessTask(float dt) {
             imin = i;
     }
 
-    condition_a = (g_VibeManager.amplitudes[imax] - g_VibeManager.amplitudes[imin]) > KNOCK_TRIG_THRESHOLD;
+    //condition_a = (g_VibeManager.amplitudes[imax] - g_VibeManager.amplitudes[imin]) > KNOCK_TRIG_THRESHOLD;
     condition_b = g_VibeManager.amplitudes[imax] > KNOCK_AMP_THRESHOLD;
 
     DEBUG = g_VibeManager.amplitudes[imax] - g_VibeManager.amplitudes[imin];

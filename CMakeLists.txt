@@ -30,4 +30,4 @@ add_custom_target(
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/modules/mqtts.cpp src/modules/mqtts.h src/modules/serial.cpp src/modules/serial.h src/modules/serial.cpp src/modules/serial.h src/modules/serial.cpp src/modules/serial.cpp src/modules/serial.h src/modules/mpu6050.cpp src/modules/mpu6050.h src/modules/kernel.cpp src/modules/kernel.h src/modules/led.cpp src/modules/led.h src/modules/keygen.cpp src/modules/keygen.h src/modules/Dynkey.cpp src/modules/Dynkey.h)
+add_executable(Z_DUMMY_TARGET ${SRC_LIST} src/modules/mqtts.cpp src/modules/mqtts.h src/modules/serial.cpp src/modules/serial.h src/modules/serial.cpp src/modules/serial.h src/modules/serial.cpp src/modules/serial.cpp src/modules/serial.h src/modules/mpu6050.cpp src/modules/mpu6050.h src/modules/kernel.cpp src/modules/kernel.h src/modules/led.cpp src/modules/led.h src/modules/keygen.cpp src/modules/keygen.h src/modules/Dynkey16.cpp src/modules/Dynkey16.h)

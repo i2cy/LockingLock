@@ -68,6 +68,7 @@ extern LEDManager_t g_LEDManager;
 extern MotorManager_t g_MotorManager;
 extern int32_t TIME_OFFSET_SEC;
 
+
 // 创建TLS加密的WIFI客户端
 WiFiClientSecure WifiClient;
 
@@ -156,6 +157,7 @@ void mqttCmdCallback(char *topic, byte *payload, unsigned int length) {
         time(&now);
 
         TIME_OFFSET_SEC = *((int32_t *) (payload + 4)) - now;
+        setDynkey16TimeOffset(TIME_OFFSET_SEC);
         sendOK();
     }
     else if (header->cmd_id == CMD_ID_CONFIG) {                 // 设置配置
@@ -188,7 +190,7 @@ void sendHeartbeat() {
         time(&ts);
         ts += TIME_OFFSET_SEC;
         mqttSendCommand(MQTT_FB_TOPIC, CMD_ID_HEARTBEAT, (uint8_t *) &ts, 4);
-        Serial.print("heartbeat sent\n");
+        //Serial.print("heartbeat sent\n");
     }
 }
 

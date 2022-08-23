@@ -329,7 +329,7 @@ uint32_t PubSubClient::readPacket(uint8_t* lengthLength) {
         if(!readByte(&digit)) return 0;
         this->buffer[len++] = digit;
         length += (digit & 127) * multiplier;
-        multiplier <<=7; //multiplier *= 128
+        multiplier <<=7; //divide *= 128
     } while ((digit & 128) != 0);
     *lengthLength = len-1;
 

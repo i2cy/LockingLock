@@ -22,3 +22,6 @@ typedef struct {
 
 void initKeygen();
 void dynkeyDebugTask();
+
+
+void setDynkey16TimeOffset(int32_t offset);

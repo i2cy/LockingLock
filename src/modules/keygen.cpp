@@ -11,7 +11,7 @@
 #include "time.h"
 #include "mqtts.h"
 #include "htsocket.h"
-#include "Dynkey.h"
+#include "Dynkey16.h"
 #include "WiFi.h"
 
 
@@ -31,25 +31,30 @@ extern bool FLAG_WIFI_FAILED;
 
 int32_t TIME_OFFSET_SEC = 0;
 Key_t DPSK;
-Dynkey DKgen = nullptr;
+Dynkey16 DKgen = nullptr;
 
 
 void initKeygen() {
     memcpy(DPSK.value, DK_PSK, DK_PSK_LENGTH);
     DPSK.len = DK_PSK_LENGTH;
 
-    DKgen = Dynkey(&DPSK);
+    DKgen = Dynkey16(&DPSK);
 }
 
 // 5Hz
 void dynkeyDebugTask() {
-    uint8_t buf[64 + 4];
+    //uint8_t buf[16 + 4];
     Key_t test_key;
     DKgen.keygen(&test_key);
-    memcpy(buf, test_key.value, test_key.len);
-    buf[64] = test_key.timestamp >> 24;
-    buf[65] = test_key.timestamp >> 16;
-    buf[66] = test_key.timestamp >> 8;
-    buf[67] = test_key.timestamp;
-    sendHtpack(buf, DEBUG_ADDR, DEBUG_FCODE, 68);
+    /*memcpy(buf, test_key.value, test_key.len);
+    buf[16] = test_key.timestamp >> 24;
+    buf[17] = test_key.timestamp >> 16;
+    buf[18] = test_key.timestamp >> 8;
+    buf[19] = test_key.timestamp;
+    sendHtpack(buf, DEBUG_ADDR, DEBUG_FCODE, 16 + 4);*/
+}
+
+
+void setDynkey16TimeOffset(int32_t offset) {
+    DKgen.setTimeOffset(offset);
 }

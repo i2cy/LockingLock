@@ -100,9 +100,9 @@ void kernelLoopCPU2(void *pvParameters) {
             kernel1WdTask();
         }
 
-        // 5Hz
-        if (!(Kernel2_Cnt % 400)) {
-            //dynkeyDebugTask();
+        // 0.5Hz
+        if (!(Kernel2_Cnt % 4000)) {
+            dynkeyDebugTask();
         }
 
         // 1Hz

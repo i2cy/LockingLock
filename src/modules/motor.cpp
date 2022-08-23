@@ -85,9 +85,8 @@ void setMotorCaliOffset() {
 
 void retractMotor() {
     if (TRIGGERED) {
-        if (g_MotorManager.cali_enabled) {
+        if (g_MotorManager.cali_enabled && g_MotorManager.current_steps != 0) {
             g_MotorManager.total_steps = -g_MotorManager.current_steps;
-            g_MotorManager.cali_enabled = false;
             sendCaliOffset(g_MotorManager.total_steps);
         }
 
@@ -254,6 +253,7 @@ void motorSequenceTask() {
         case CALI_FINISH:
             if (TRIGGERED) {
                 g_MotorManager.sequence = LOCKING;
+                g_MotorManager.cali_enabled = false;
             }
             else {
                 g_MotorManager.status = RETRACT;
