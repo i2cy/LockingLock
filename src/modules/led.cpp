@@ -29,7 +29,7 @@ void ledSwitchOff(uint8_t pin) {
 
 
 void ledSwitchToggle(uint8_t pin) {
-    digitalWrite(pin, !(bool)digitalRead(pin));
+    digitalWrite(pin, !(bool) digitalRead(pin));
 }
 
 
