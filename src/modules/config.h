@@ -10,7 +10,15 @@
 #include <Arduino.h>
 #include "Preferences.h"
 
+
 void readSSIDConfig(char *dst);
+
 void writeSSIDConfig(char *ssid);
+
 void readPSKConfig(char *dst);
+
 void writePSKConfig(char *psk);
+
+void writeMotorOffsetConfig(uint32_t value);
+
+uint32_t readMotorOffsetConfig();

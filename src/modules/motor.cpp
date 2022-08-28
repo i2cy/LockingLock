@@ -5,6 +5,7 @@
 #include "led.h"
 #include "mpu6050.h"
 #include "mqtts.h"
+#include "config.h"
 
 
 #define MOTOR_A                     11
@@ -47,8 +48,8 @@ void initMotor()
     // initialize trigger
     pinMode(TRIGGER, INPUT_PULLDOWN);
 
-    g_MotorManager.current_steps = 1000;
-    g_MotorManager.total_steps = 1000;
+    g_MotorManager.total_steps = readMotorOffsetConfig();
+    g_MotorManager.current_steps = (int32_t)g_MotorManager.total_steps;
     g_MotorManager.status = IDLE;
     g_MotorManager.countdown = 0;
     g_MotorManager.sequence = LOCKED;
@@ -88,6 +89,7 @@ void retractMotor() {
         if (g_MotorManager.cali_enabled && g_MotorManager.current_steps != 0) {
             g_MotorManager.total_steps = -g_MotorManager.current_steps;
             sendCaliOffset(g_MotorManager.total_steps);
+            writeMotorOffsetConfig(g_MotorManager.total_steps);
         }
 
         g_MotorManager.current_steps = 0;

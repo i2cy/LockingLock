@@ -80,8 +80,8 @@ bool FLAG_WIFI_FAILED = false;
 uint8_t OK_FEEDBACK = 0;
 
 // WIFI信息
-char WIFI_SSID[64] = "AMA_CDUT";
-char WIFI_PSK[64] = "12356789";
+char WIFI_SSID[64] = "";
+char WIFI_PSK[64] = "";
 
 // 定时器,用来循环上传数据
 Ticker HeartBeat_TIM;
