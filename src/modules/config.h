@@ -22,3 +22,13 @@ void writePSKConfig(char *psk);
 void writeMotorOffsetConfig(uint32_t value);
 
 uint32_t readMotorOffsetConfig();
+
+void writeMqttPwdConfig(char *value);
+
+void readMqttPwdConfig(char *dst);
+
+void writeMqttUsernameConfig(char *value);
+
+void readMqttUsernameConfig(char *dst);
+
+

@@ -40,9 +40,6 @@ VDRIHMERipibUWtLKgEEhDtb88x14DsrZTsp3mb0+nkt1lDBR9rUpLVDyI+CiVE=
 
 #define MQTT_DEVID          "esp_device001"         // 设备ID
 
-#define MQTT_PUBID          "icy"                   // MQTT用户名
-#define MQTT_PASSWORD       "__C4o0d9y6#"           // MQTT密码
-
 #define MQTT_CMD_TOPIC      "esp32test/request/#"   // 订阅指令主题
 #define MQTT_FB_TOPIC       "esp32test/data"        // 上发主题
 
@@ -82,6 +79,10 @@ uint8_t OK_FEEDBACK = 0;
 // WIFI信息
 char WIFI_SSID[64] = "";
 char WIFI_PSK[64] = "";
+
+// MQTT鉴权信息
+char MQTT_USER[64] = "";
+char MQTT_PWD[64] = "";
 
 // 定时器,用来循环上传数据
 Ticker HeartBeat_TIM;
@@ -244,7 +245,10 @@ bool setupMQTT() {
     bool ret;
     // 连接到服务器
     MQTTClient.setServer(MQTT_SERVER_PTR, MQTT_PORT);
-    ret = MQTTClient.connect(MQTT_DEVID, MQTT_PUBID, MQTT_PASSWORD);
+    readMqttUsernameConfig(MQTT_USER);
+    readMqttPwdConfig(MQTT_PWD);
+
+    ret = MQTTClient.connect(MQTT_DEVID, MQTT_USER, MQTT_PWD);
     if (MQTTClient.connected()) {
         MQTTClient.subscribe(MQTT_CMD_TOPIC); //订阅命令下发主题
     }

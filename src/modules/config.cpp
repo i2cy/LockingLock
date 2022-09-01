@@ -7,6 +7,8 @@
 #define WIFI_SSID_ADDR      "WIFI_SSID"
 #define WIFI_PSK_ADDR       "WIFI_PSK"
 #define MOTOR_OFFSET        "MOTOR_OFFSET"
+#define MQTT_USERNAME       "MQTT_USERNAME"
+#define MQTT_PWD            "MQTT_PWD"
 
 #include "config.h"
 
@@ -72,3 +74,42 @@ void writeMotorOffsetConfig(uint32_t value) {
     pref.putULong(MOTOR_OFFSET, value);
     pref.end();
 }
+
+
+// 读取MQTT用户名
+void readMqttUsernameConfig(char *dst) {
+    pref.begin(CONFIG);
+    if (pref.isKey(MQTT_USERNAME))
+        pref.getString(MQTT_USERNAME, dst, 64);
+    pref.end();
+}
+
+
+// 写入MQTT用户名
+void writeMqttUsernameConfig(char *value) {
+    Serial.print("Setting MQTT username: ");
+    Serial.println(value);
+    pref.begin(CONFIG);
+    pref.putString(MQTT_USERNAME, value);
+    pref.end();
+}
+
+
+// 读取MQTT密码
+void readMqttPwdConfig(char *dst) {
+    pref.begin(CONFIG);
+    if (pref.isKey(MQTT_PWD))
+        pref.getString(MQTT_PWD, dst, 64);
+    pref.end();
+}
+
+
+// 写入MQTT密码
+void writeMqttPwdConfig(char *value) {
+    Serial.print("Setting MQTT password: ");
+    Serial.println(value);
+    pref.begin(CONFIG);
+    pref.putString(MQTT_PWD, value);
+    pref.end();
+}
+

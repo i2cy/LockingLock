@@ -21,6 +21,8 @@
 extern bool FLAG_WIFI_FAILED;
 extern char WIFI_SSID[64];
 extern char WIFI_PSK[64];
+extern char MQTT_USER[64];
+extern char MQTT_PWD[64];
 
 
 // 静态文本
@@ -54,6 +56,22 @@ void processSerialCmd(uint8_t *cmd_t) {
         sendHtpack((uint8_t *) &OK_CODE, serial_addr, cmd_fcode, sizeof(OK_CODE) - 1);
         //FLAG_WIFI_FAILED = false;
         //reconnectWifiEventTask();
+    }
+    else if (cmd_t[0] == 0x13) {  // MQTT设置-设置用户名
+        writeMqttUsernameConfig((char *)(cmd_t + 1));
+        memmove(MQTT_USER, (char *)(cmd_t + 1), sizeof(MQTT_USER));
+        readMqttUsernameConfig(feed);
+        Serial.print("MQTT User set: ");
+        Serial.println(feed);
+        sendHtpack((uint8_t *) &OK_CODE, serial_addr, cmd_fcode, sizeof(OK_CODE) - 1);
+    }
+    else if (cmd_t[0] == 0x14) {  // MQTT设置-设置密码
+        writeMqttPwdConfig((char *)(cmd_t + 1));
+        memmove(MQTT_PWD, (char *)(cmd_t + 1), sizeof(MQTT_PWD));
+        readMqttPwdConfig(feed);
+        Serial.print("MQTT PWD set: ");
+        Serial.println(feed);
+        sendHtpack((uint8_t *) &OK_CODE, serial_addr, cmd_fcode, sizeof(OK_CODE) - 1);
     }
 }
 
