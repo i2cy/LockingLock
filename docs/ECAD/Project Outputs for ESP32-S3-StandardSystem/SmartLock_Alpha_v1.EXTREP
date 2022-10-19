@@ -1,0 +1,26 @@
+------------------------------------------------------------------------------------------
+Gerber File Extension Report For: SmartLock_Alpha_v1.GBR   2022/6/19  3:27:43
+------------------------------------------------------------------------------------------
+
+
+------------------------------------------------------------------------------------------
+Layer Extension     Layer Description                      
+------------------------------------------------------------------------------------------
+.GTL                Top Layer                               
+.GBL                Bottom Layer                            
+.GTP                Top Paste                               
+.GTS                Top Solder                              
+.GTO                Top Overlay                             
+.GBS                Bottom Solder                           
+.GM1                Mechanical 1                            
+.GPT                Top Pad Master                          
+.GPB                Bottom Pad Master                       
+.GBP                Bottom Paste                            
+.GM15               Mechanical 15                           
+.GBO                Bottom Overlay                          
+.G1                 Signal Layer 1                          
+.GM13               Mechanical 13                           
+.G2                 Signal Layer 2                          
+.GD1                Drill Drawing                           
+.GG1                Drill Guide                             
+------------------------------------------------------------------------------------------

@@ -1,0 +1,34 @@
+Field=#~Integer~#~50|Field=Comment~String~Comment~100|Field=Description~String~Description~100|Field=Designator~String~Designator~100|Field=Footprint~String~Footprint~100|Field=LibRef~String~LibRef~100|Field=Quantity~Integer~Quantity~100|ReportField=Currency~<none>|ReportField=ProductionQuantity~1|ReportField=ProjectFileName~ESP32-S3-StandardSystem.PrjPCB|ReportField=ProjectFullPath~E:\BaiduSyncdisk\DateBasedProjects\2022\6.18 电子门锁\ECAD\ESP32-S3-StandardSystem.PrjPCB|ReportField=Title~Bill of Materials For Project [ESP32-S3-StandardSystem.PrjPCB] (No PCB Document Selected)|ReportField=ReportTime~16:33:10|ReportField=ReportDate~2022/8/16|ReportField=ReportDateTime~2022/8/16 16:33:10|ReportField=OutputName~Bill of Materials|ReportField=OutputType~BOM_PartType|ReportField=GeneratorName~BOM|ReportField=GeneratorDescription~Bill of Materials|ReportField=VariantName~None|ReportField=TotalQuantity~68|ReportField=TotalActualPrice~0|ReportField=TotalTargetPrice~0|ReportField=VersionControl_RevNumber~|ReportField=VersionControl_ProjFolderRevNumber~|ReportField=Address1~|ReportField=Address2~|ReportField=Address3~|ReportField=Address4~|ReportField=Application_BuildNumber~|ReportField=ApprovedBy~|ReportField=Author~|ReportField=CheckedBy~|ReportField=CompanyName~|ReportField=CurrentDate~2022/8/16|ReportField=CurrentTime~16:32:39|ReportField=Date~|ReportField=DocumentFullPathAndName~E:\BaiduSyncdisk\DateBasedProjects\2022\6.18 电子门锁\ECAD\core.SchDoc|ReportField=DocumentName~core.SchDoc|ReportField=DocumentNumber~|ReportField=DrawnBy~|ReportField=Engineer~|ReportField=ImagePath~|ReportField=ModifiedDate~2022/8/13|ReportField=Organization~|ReportField=ProjectName~ESP32-S3-StandardSystem.PrjPCB|ReportField=Revision~|ReportField=Rule~|ReportField=SheetNumber~|ReportField=SheetTotal~|ReportField=Time~|ReportField=Title~|ReportField=DataSourceFileName~ESP32-S3-StandardSystem.PrjPCB|ReportField=DataSourceFullPath~E:\BaiduSyncdisk\DateBasedProjects\2022\6.18 电子门锁\ECAD\ESP32-S3-StandardSystem.PrjPCB|ReportField=PCBConfigurationName~Sources|ReportField=Item~|ReportField=ItemRevision~|ReportField=ItemAndRevision~|ReportField=ItemRevisionBase~|ReportField=ItemRevisionLevel1~|ReportField=ItemRevisionLevel2~|ReportField=ItemRevisionLevel1AndBase~|ReportField=ItemRevisionLevel2AndLevel1~
+1|AN2051-245|AN2051 多层贴片天线 2.45GHz @110Mhz带宽 50ohm阻抗|ANT1|SMD-2051|AN2051|1
+2|3x6x5|3x6轻触开关|BOOT, RST|TSW SMD-3*6*2.5|TSW 3x6|2
+3|20pF|贴片电容|C1, C2|C 0603_L|C|2
+4|1uF|贴片电容|C3, C4, C6, C10, C13, C16, C19, C23, C30|C 0603_L|C|9
+5|100nF|贴片电容|C5, C7, C11, C14, C15, C18, C20, C21, C24, C25, C26, C27, C29|C 0603_L|C|13
+6|3.3pF（不焊）|精密电容|C8|C 0402_L|C-Precision|1
+7|2.3pF（不焊）|精密电容|C9|C 0402_L|C-Precision|1
+8|10uF|贴片电容|C12, C22|C 0603_L|C|2
+9|10nF|贴片电容|C17|C 0603_L|C|1
+10|2.2nF|贴片电容|C28|C 0603_L|C|1
+11|DEBUG PAD|调试断点焊盘|DE1|DEBUG_A|DEBUG|1
+12|22uF/10V|贴片钽电容|E1, E2|CD A(3216)|CT|2
+13|220uF/50V|贴片固态电容|E3|CT 10*8 - C|CS_SMD|1
+14|22nH|小功率贴片电感|L1|L 0603|L|1
+15|2.4nH|小功率贴片电感|L2, L3|L 0402|L|2
+16|绿色|贴片LED|LED1|LED 0603B|LED-SMD|1
+17|青色|贴片LED|LED2|LED 0603B|LED-SMD|1
+18|蓝色|贴片LED|LED3|LED 0603B|LED-SMD|1
+19|HDR-1X2|2P接插件|LL-SW|XH2.54-WI-2P|Header 2|1
+20|红色|贴片LED|PWR|LED 0603B|LED-SMD|1
+21|SS8050|高频放大-NPN型|Q1, Q2|SOT23-3N|8050-SMD|2
+22|10K|贴片电阻|R1, R6, R7|R 0603_L|R|3
+23|470R|贴片电阻|R2, R3, R4, R5|R 0603_L|R|4
+24|4.7K|贴片电阻|R8, R9, R10, R11, R12|R 0603_L|R|5
+25|HDR-1X5|5P接插件|STEP-MOTOR|XH2.54-WI-5P|Header 5|1
+26|ESP32-S3|2.4 GHz Wi­Fi + 低功耗蓝牙 SoC|U1|QFN56 7x7|ESP32-S3|1
+27|W25Q64JVSSIQ|8MB SPI Flash存储器|U2|SOIC-8W|W25Q64|1
+28|CH9102F|QFN24 CH9102 CP2102替代|U3|QFN24|CH9102F|1
+29|达林顿驱动芯片|达林顿驱动芯片|U4|SOP16|ULN2003|1
+30|MPU6050|三轴加速度计和三轴陀螺仪，工作电压：2.375V~3.46V|U5|QFN24 4x4_N|MPU6050|1
+31|TYPE-C 2.0 -16P|USB2.0 Type-C 母座 16Pin|USBC1|USB-C-SMD_TYPE-C-USB-5|USB2.0 Type-C 16Pin母座|1
+32|AMS1117-3V3|三端稳压芯片|V1|SOT223_L|AMS1117|1
+33|40M ±10ppm|4脚无源晶振|X1|OSC 2025-4P|XTAL-4P|1

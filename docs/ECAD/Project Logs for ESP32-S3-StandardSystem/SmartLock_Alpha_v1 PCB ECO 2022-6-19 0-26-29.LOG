@@ -1,0 +1,5 @@
+Added Pin To Net: NetName=VDD3P3 Pin=C15-1
+Added Pin To Net: NetName=VDD3P3 Pin=L3-2
+Added Room: Name=core
+Added Room: Name=motor&sensor
+Added Room: Name=utils
